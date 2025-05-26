@@ -1,0 +1,15 @@
+
+libUSB-1.0 installed
+% sudo apt-get install libusb-1.0
+
+Bus 001 Device 006: ID 0403:6001 Future Technology Devices International, Ltd FT232 Serial (UART) IC
+
+Device is now known....
+
+Trying PyDMXControl
+it also installed udmx-pyusb-2.0.0
+
+Add FTDI device to 
+/etc/udev/rules.d/11-ftdi.rules
+https://eblot.github.io/pyftdi/installation.html
+

@@ -1,0 +1,9 @@
+
+https://learn.adafruit.com/adafruit-dotstar-leds/python-circuitpython
+
+The DotStars need to be connected to 5 V power independent of the 
+Raspberry Pi.  The Pi can supply ~ 1 A
+
+led_strips_raspi_DotStar_SPI_bb.jpg shows the connection pins
+
+There are 2 strips of 144 DotStars connected.  
