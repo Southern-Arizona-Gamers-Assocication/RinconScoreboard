@@ -1,3 +1,7 @@
+starting up ssh
+% eval "$(ssh-agent -s)"
+% ssh-add ~/.ssh/id_ed25519
+
 
 % source venv/bin/activate
 % python scoreboard.py
@@ -29,3 +33,8 @@ https://pinout.xyz/ - Raspberry pi pinouts
 -  Black: 9 (Ground)
 -  Brown: 5 (GPIO 3)
 
+---
+Initial venv setup using python 3.11
+% python -m venv venv 
+% source venv/bin/activate
+% python -m pip install -r requirements.txt
