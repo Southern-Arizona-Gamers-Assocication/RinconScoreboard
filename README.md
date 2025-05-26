@@ -1,11 +1,31 @@
-# RinconScoreboard
 
-To install, start a new virtual environment and run
-```
-pip install -r requirements.txt
-```
-This requires Python 3.6 or later (to work with pygame and ftdi).
+% source venv/bin/activate
+% python scoreboard.py
 
-You will also need to place the file 98-uDMX.rules in your /etc/udev/rules.d/ folder and then you must restart your raspberry pi. This is a udev rule, which gives permissions to interface with the ftdi usb to DMX cable for the DMX lighting.
+Requires libUSB-1.0 installed in system
+apt-get install libusb-1.0
 
-The wiring for the raspberry pi is shown in the scoreboard.py near the beginning of the file. 
+Bus 001 Device 006: ID 0403:6001 Future Technology Devices International, Ltd FT232 Serial (UART) IC
+
+
+https://pinout.xyz/ - Raspberry pi pinouts
+
+** Light Strips
+- Red: 2 or 4 (5v Power) -- Optional
+- Black: 6 (Ground)
+- Green: 19 (SPI0 MOSI)
+- Yellow: 23 (SPI0 SCLK)
+
+** 2 button (red and blue)
+- Gray: 35 (GPIO 19)
+- Orange/Red: 37 (GPIO 26)
+- Blue: 39 (GND)
+
+** Red button box
+- Red: 2 or 4 (5v Power)
+- Yellow: 10 (GPIO 15)
+
+** Blue button box
+-  Black: 9 (Ground)
+-  Brown: 5 (GPIO 3)
+
