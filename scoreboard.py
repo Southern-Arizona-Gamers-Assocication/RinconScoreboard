@@ -18,7 +18,7 @@ import adafruit_dotstar as dotstar # Adafruit DotStar library
 # outlaws = Red
 
 # button callback functions
-def blue_button_callback(channel):
+def blue_effect_button_callback(channel):
     global bluesounds
     rand = random.randint(0,len(bluesounds) - 1)
     bluesounds[rand].play()
@@ -30,7 +30,7 @@ def blue_button_callback(channel):
     # while time.time() < t_end:
     #     t.send_dmx([255,0,0,255])
 
-def red_button_callback(channel):
+def red_effect_button_callback(channel):
     global redsounds
     rand = random.randint(0,len(redsounds) - 1)
     redsounds[rand].play()
@@ -42,7 +42,7 @@ def red_button_callback(channel):
     # while time.time() < t_end:
     #     t.send_dmx([255,255,0,0])
 
-def real_blue_button_callback(channel):
+def score_blue_button_callback(channel):
     global outlaws
     global deputies
     deputies += 1
@@ -52,7 +52,7 @@ def real_blue_button_callback(channel):
     outf.close()
     update_LEDs()
 
-def real_red_button_callback(channel):
+def score_red_button_callback(channel):
     global outlaws
     global deputies
     outlaws += 1
@@ -118,7 +118,7 @@ redsounds,redsoundsnames = load_sounds('red_sounds')
 # prepare DMX
 # t = OpenDmxUsb()
 
-# initialize dots (LEDs)
+# initialize dots (LEDs) 2 strings of 144 RGB LEDs = 288 LEDs
 dots = dotstar.DotStar(board.SCK, board.MOSI, 288, brightness=0.1)
 reset_LEDs()
 dots[0] = (0,0,255)
@@ -131,15 +131,22 @@ update_LEDs(initialize = True)
 # Setup GPIO for buttons
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False) # Ignore warning for now
-GPIO.setup(15, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # Set pin 15 to be an input pin and set initial value to be pulled low (off)
-GPIO.setup(3, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set pin 3 to be an input pin and set initial value to be pulled low (off)
-GPIO.setup(19, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set pin 19 to be an input pin and set initial value to be pulled low (off)
-GPIO.setup(26, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set pin 26 to be an input pin and set initial value to be pulled low (off)
 
-GPIO.add_event_detect(15,GPIO.RISING,callback=red_button_callback,bouncetime=800) # Setup event on pin 15 rising edge
-GPIO.add_event_detect(3,GPIO.RISING,callback=blue_button_callback,bouncetime=800) # Setup event on pin 3 rising edge
-GPIO.add_event_detect(19,GPIO.RISING,callback=real_red_button_callback,bouncetime=800) # Setup event on pin 19 rising edge
-GPIO.add_event_detect(26,GPIO.RISING,callback=real_blue_button_callback,bouncetime=800) # Setup event on pin 26 rising edge
+# Red Effect Button
+GPIO.setup(18, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 18 to be an input pin and set initial value to be pulled High (off)
+GPIO.add_event_detect(18,GPIO.RISING,callback=red_effect_button_callback,bouncetime=800) # Setup event on GPIO 18 rising edge
+
+# Blue Effect Button
+GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 24 to be an input pin and set initial value to be pulled High (off)
+GPIO.add_event_detect(24,GPIO.RISING,callback=blue_effect_button_callback,bouncetime=800) # Setup event on GPIO 24 rising edge
+
+# Red Score Button
+GPIO.setup(19, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 19 to be an input pin and set initial value to be pulled High (off)
+GPIO.add_event_detect(19,GPIO.RISING,callback=score_red_button_callback,bouncetime=800) # Setup event on GPIO 19 rising edge
+
+# Blue Score Button
+GPIO.setup(16, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 16 to be an input pin and set initial value to be pulled High (off)
+GPIO.add_event_detect(16,GPIO.RISING,callback=score_blue_button_callback,bouncetime=800) # Setup event on GPIO 16 rising edge
 
 # Terminate
 message = input("Press enter to quit\n\n") # Run until someone presses enter

@@ -12,26 +12,27 @@ apt-get install libusb-1.0
 Bus 001 Device 006: ID 0403:6001 Future Technology Devices International, Ltd FT232 Serial (UART) IC
 
 
+# R-PI Pins used
 https://pinout.xyz/ - Raspberry pi pinouts
 
-** Light Strips
-- Red: 2 or 4 (5v Power) -- Optional
-- Black: 6 (Ground)
-- Green: 19 (SPI0 MOSI)
-- Yellow: 23 (SPI0 SCLK)
+|Pin \ #| Pi Func    | Wire Color | Description |
+|:----:|------------|-----------:|-------------|
+|| **Light Strips** |||
+|2 or 4| 5v Power   | Red        | Optional    |
+| 6    | Ground     | Black      | |
+| 19   | SPI0 MOSI  | Green      | SPI Data to LED Array|
+| 23   | SPI0 SCLK  | Yellow     | SPI Clock for LED Array|
+|| **2 button box** |||
+| 35   | GPIO19     | Gray       | Red Score|
+| 36   | GPIO16     | Orange/Red | Blue Score|
+| 34   | Ground     | Blue       | |
+|| **Red Button Box** |||
+| 14   | Ground     | Red        | |
+| 12   | GPIO18     | Yellow     | Red Effect|
+|| **Blue Button Box** |||
+| 20   | Ground     | Black      | |
+| 18   | GPI024     | Brown      | Blue Effect|
 
-** 2 button (red and blue)
-- Gray: 35 (GPIO 19)
-- Orange/Red: 37 (GPIO 26)
-- Blue: 39 (GND)
-
-** Red button box
-- Red: 2 or 4 (5v Power)
-- Yellow: 10 (GPIO 15)
-
-** Blue button box
--  Black: 9 (Ground)
--  Brown: 5 (GPIO 3)
 
 ---
 Initial venv setup using python 3.11
