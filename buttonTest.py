@@ -38,19 +38,19 @@ GPIO.setwarnings(False) # Ignore warning for now
 
 # Red Effect Button
 GPIO.setup(18, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 18 to be an input pin and set initial value to be pulled High (off)
-GPIO.add_event_detect(18,GPIO.RISING,callback=red_effect_button_callback,bouncetime=50) # Setup event on GPIO 18 rising edge
+GPIO.add_event_detect(18,GPIO.RISING,callback=red_effect_button_callback,bouncetime=0) # Setup event on GPIO 18 rising edge
 
 # Blue Effect Button
 GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 24 to be an input pin and set initial value to be pulled High (off)
-GPIO.add_event_detect(24,GPIO.RISING,callback=blue_effect_button_callback,bouncetime=50) # Setup event on GPIO 24 rising edge
+GPIO.add_event_detect(24,GPIO.RISING,callback=blue_effect_button_callback,bouncetime=0) # Setup event on GPIO 24 rising edge
 
 # Red Score Button
 GPIO.setup(19, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 19 to be an input pin and set initial value to be pulled High (off)
-GPIO.add_event_detect(19,GPIO.RISING,callback=score_red_button_callback,bouncetime=50) # Setup event on GPIO 19 rising edge
+GPIO.add_event_detect(19,GPIO.RISING,callback=score_red_button_callback,bouncetime=0) # Setup event on GPIO 19 rising edge
 
 # Blue Score Button
 GPIO.setup(16, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 16 to be an input pin and set initial value to be pulled High (off)
-GPIO.add_event_detect(16,GPIO.RISING,callback=score_blue_button_callback,bouncetime=50) # Setup event on GPIO 16 rising edge
+GPIO.add_event_detect(16,GPIO.RISING,callback=score_blue_button_callback,bouncetime=0) # Setup event on GPIO 16 rising edge
 
 # Terminate
 message = input("Press enter to quit\n\n") # Run until someone presses enter
