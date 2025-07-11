@@ -7,18 +7,22 @@ import board # Adafruit board library
 import adafruit_dotstar as dotstar # Adafruit DotStar library
 
 def blue_effect_button_callback(channel):
+    global blue_effect_count
     blue_effect_count += 1
     print("effect blue: {}".format(blue_effect_count))
 
 def red_effect_button_callback(channel):
+    global red_effect_count
     red_effect_count += 1
     print("effect red: {}".format(red_effect_count))
 
 def score_blue_button_callback(channel):
+    global deputies
     deputies += 1
     print("real blue: {}".format(deputies))
 
 def score_red_button_callback(channel):
+    global outlaws
     outlaws += 1
     print("real red: {}".format(outlaws))
     
@@ -51,5 +55,5 @@ GPIO.add_event_detect(16,GPIO.RISING,callback=score_blue_button_callback,bouncet
 # Terminate
 message = input("Press enter to quit\n\n") # Run until someone presses enter
 GPIO.cleanup() # Clean up
-print("blue: {}, red: {}\n".format(deputies,outlaws))
+print("blue: {}, red: {}, blue_effect_count: {}, red_effect_count: {} \n".format(deputies,outlaws,blue_effect_count,red_effect_count)) # Print final counts
 
