@@ -43,51 +43,51 @@ def red_effect_button_callback(channel):
     #     t.send_dmx([255,255,0,0])
 
 def score_blue_button_callback(channel):
-    global outlaws
-    global deputies
-    deputies += 1
-    print("real blue: {}".format(deputies))
+    global scoreRed
+    global scoreBlue
+    scoreBlue += 1
+    print("real blue: {}".format(scoreBlue))
     outf = open('./scores.txt','w')
-    outf.write('{}\n{}\n'.format(outlaws,deputies))
+    outf.write('{}\n{}\n'.format(scoreRed,scoreBlue))
     outf.close()
     update_LEDs()
 
 def score_red_button_callback(channel):
-    global outlaws
-    global deputies
-    outlaws += 1
-    print("real red: {}".format(outlaws))
+    global scoreRed
+    global scoreBlue
+    scoreRed += 1
+    print("real red: {}".format(scoreRed))
     outf = open('./scores.txt','w')
-    outf.write('{}\n{}\n'.format(outlaws,deputies))
+    outf.write('{}\n{}\n'.format(scoreRed,scoreBlue))
     outf.close()
     update_LEDs()
 
 # LED functions
 def update_LEDs(initialize=False):
-    global outlaws
-    global deputies
+    global scoreRed
+    global scoreBlue
     global dots
-    global deputythreshold
-    global outlawthreshold
-    currdeputy = int(math.log(deputies) * 14)
-    curroutlaw = int(math.log(outlaws) * 14)
-    print("current: red: {}  blue: {}".format(curroutlaw,currdeputy))
-    if currdeputy > deputythreshold or initialize == True:
+    global threshold_blue
+    global threshold_red
+    currBlue = int(math.log(scoreBlue) * 14)
+    currRed = int(math.log(scoreRed) * 14)
+    print("current: red: {}  blue: {}".format(currRed,currBlue))
+    if currBlue > threshold_blue or initialize == True:
         print('in changing lights')
-        for i in range(currdeputy):
+        for i in range(currBlue):
             dots[i] = (0,0,255)
-        deputythreshold = currdeputy
-    if curroutlaw > outlawthreshold or initialize == True:
+        threshold_blue = currBlue
+    if currRed > threshold_red or initialize == True:
         print('in changing lights2')
-        for i in range(288-curroutlaw,288):
+        for i in range(288-currRed,288):
             dots[i] = (255,0,0)
-        outlawthreshold = curroutlaw
+        threshold_red = currRed
         
 def test_LEDs(blue, red):
-    global outlaws
-    global deputies
-    deputies = blue
-    outlaws = red
+    global scoreRed
+    global scoreBlue
+    scoreBlue = blue
+    scoreRed = red
     update_LEDs(True)
 
 def reset_LEDs():
@@ -107,8 +107,8 @@ def load_sounds(dirname):
 
 # Read in existing scores
 inf = open('./scores.txt','r').readlines()
-outlaws = int(inf[0].strip())
-deputies = int(inf[1].strip())
+scoreRed = int(inf[0].strip())
+scoreBlue = int(inf[1].strip())
 
 # read in sounds
 pygame.init()
@@ -124,8 +124,8 @@ reset_LEDs()
 dots[0] = (0,0,255)
 dots[287] = (255,0,0)
 
-deputythreshold = int(math.log(deputies) * 14)
-outlawthreshold = int(math.log(outlaws) * 14)
+threshold_blue = int(math.log(scoreBlue) * 14)
+threshold_red = int(math.log(scoreRed) * 14)
 update_LEDs(initialize = True)
 
 # Setup GPIO for buttons
@@ -134,7 +134,7 @@ GPIO.setwarnings(False) # Ignore warning for now
 
 # Red Effect Button
 GPIO.setup(18, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 18 to be an input pin and set initial value to be pulled High (off)
-GPIO.add_event_detect(18,GPIO.RISING,callback=red_effect_button_callback,bouncetime=800) # Setup event on GPIO 18 rising edge
+GPIO.add_event_detect(18,GPIO.RISING,callback=red_button_callback,bouncetime=800) # Setup event on GPIO 18 rising edge
 
 # Blue Effect Button
 GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 24 to be an input pin and set initial value to be pulled High (off)
@@ -152,5 +152,5 @@ GPIO.add_event_detect(16,GPIO.RISING,callback=score_blue_button_callback,bouncet
 message = input("Press enter to quit\n\n") # Run until someone presses enter
 GPIO.cleanup() # Clean up
 reset_LEDs()
-print("blue: {}, red: {}\n".format(deputies,outlaws))
+print("blue: {}, red: {}\n".format(scoreBlue,scoreRed))
 
