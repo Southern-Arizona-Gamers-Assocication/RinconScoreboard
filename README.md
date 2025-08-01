@@ -5,6 +5,8 @@ starting up ssh
 
 % source venv/bin/activate
 % python scoreboard.py
+# to leave venv:
+% deactivate
 
 Requires libUSB-1.0 installed in system
 apt-get install libusb-1.0

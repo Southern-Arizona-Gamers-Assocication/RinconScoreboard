@@ -111,6 +111,7 @@ scoreRed = int(inf[0].strip())
 scoreBlue = int(inf[1].strip())
 
 # read in sounds
+#set Volume
 pygame.init()
 bluesounds,bluesoundsnames = load_sounds('blue_sounds')
 redsounds,redsoundsnames = load_sounds('red_sounds')
