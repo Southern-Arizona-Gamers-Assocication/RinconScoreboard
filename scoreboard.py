@@ -21,7 +21,8 @@ import adafruit_dotstar as dotstar # Adafruit DotStar library
 def blue_effect_button_callback(channel):
     global bluesounds
     rand = random.randint(0,len(bluesounds) - 1)
-    bluesounds[rand].play()
+    if  (not pygame.mixer.get_busy()):
+        bluesounds[rand].play()
     print('blue')
     t_end = time.time() + .25
     # while time.time() < t_end:
@@ -33,7 +34,8 @@ def blue_effect_button_callback(channel):
 def red_effect_button_callback(channel):
     global redsounds
     rand = random.randint(0,len(redsounds) - 1)
-    redsounds[rand].play()
+    if  (not pygame.mixer.get_busy()):
+        redsounds[rand].play()
     print('red')
     t_end = time.time() + .25 
     # while time.time() < t_end:
