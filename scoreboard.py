@@ -99,7 +99,7 @@ def reset_LEDs():
         dots[i] = (0,0,0)
 
 #load audio files for buttons
-def load_sounds(dirname):
+def sounds_load(dirname):
     sounds = []
     soundsnames = []
     for f in os.listdir(dirname):
@@ -108,6 +108,10 @@ def load_sounds(dirname):
     return sounds,soundsnames
 
 # Test sounds 
+def sounds_test(soundList):
+    for sound in soundList:
+        sound.play()
+        sleep(0.5)
 
 # Define the "Main Function" which is called automatically if this is the top level Module by the last two lines 
 def main() -> int:
@@ -128,11 +132,13 @@ def main() -> int:
 
     # read in sounds
     pygame.init()
-    bluesounds,bluesoundsnames = load_sounds('blue_sounds')
-    redsounds,redsoundsnames = load_sounds('red_sounds')
+    bluesounds,bluesoundsnames = sounds_load('blue_sounds')
+    redsounds,redsoundsnames = sounds_load('red_sounds')
     # set Volume
-    cmd = subprocess.run(["/usr/bin/amixer","set","Master","50%"])
-    
+    cmd = subprocess.run(["/usr/bin/amixer","set","Master","30%"])
+    sounds_test(bluesounds)
+    sounds_test(redsounds)
+    cmd = subprocess.run(["/usr/bin/amixer","set","Master","100%"])
 
     # prepare DMX
     # t = OpenDmxUsb()
