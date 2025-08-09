@@ -1,8 +1,13 @@
-from time import sleep
+# scoreboard.py
+
+import sys
 import time
 import os
 import random
 import math
+import subprocess
+
+from time import sleep
 
 import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
 
@@ -13,9 +18,6 @@ import adafruit_dotstar as dotstar # Adafruit DotStar library
 
 # Still need FTDI drivers 
 # from ftdi.dmx_controller.OpenDmxUsb import OpenDmxUsb
-
-# deputies = Blue
-# outlaws = Red
 
 # button callback functions
 def blue_effect_button_callback(channel):
@@ -104,56 +106,76 @@ def load_sounds(dirname):
         sounds.append(pygame.mixer.Sound('{}/'.format(dirname) + f))
         soundsnames.append(f)
     return sounds,soundsnames
+
+# Test sounds 
+
+# Define the "Main Function" which is called automatically if this is the top level Module by the last two lines 
+def main() -> int:
+    # Defining Globals
+    global scoreRed
+    global scoreBlue
+    global dots
+    global threshold_blue
+    global threshold_red
+    global bluesounds
+    global redsounds
+    # This GlobaLS section should be removed as Globals are moved into the classes and are passed deliberatly.
+
+    # Read in existing scores
+    inf = open('./scores.txt','r').readlines()
+    scoreRed = int(inf[0].strip())
+    scoreBlue = int(inf[1].strip())
+
+    # read in sounds
+    pygame.init()
+    bluesounds,bluesoundsnames = load_sounds('blue_sounds')
+    redsounds,redsoundsnames = load_sounds('red_sounds')
+    # set Volume
+    cmd = subprocess.run(["/usr/bin/amixer","set","Master","50%"])
     
-# Start of main code
 
-# Read in existing scores
-inf = open('./scores.txt','r').readlines()
-scoreRed = int(inf[0].strip())
-scoreBlue = int(inf[1].strip())
+    # prepare DMX
+    # t = OpenDmxUsb()
 
-# read in sounds
-#set Volume
-pygame.init()
-bluesounds,bluesoundsnames = load_sounds('blue_sounds')
-redsounds,redsoundsnames = load_sounds('red_sounds')
+    # initialize dots (LEDs) 2 strings of 144 RGB LEDs = 288 LEDs
+    dots = dotstar.DotStar(board.SCK, board.MOSI, 288, brightness=0.1)
+    reset_LEDs()
+    dots[0] = (0,0,255)
+    dots[287] = (255,0,0)
 
-# prepare DMX
-# t = OpenDmxUsb()
+    threshold_blue = int(math.log(scoreBlue) * 14)
+    threshold_red = int(math.log(scoreRed) * 14)
+    update_LEDs(initialize = True)
 
-# initialize dots (LEDs) 2 strings of 144 RGB LEDs = 288 LEDs
-dots = dotstar.DotStar(board.SCK, board.MOSI, 288, brightness=0.1)
-reset_LEDs()
-dots[0] = (0,0,255)
-dots[287] = (255,0,0)
+    # Setup GPIO for buttons
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False) # Ignore warning for now
 
-threshold_blue = int(math.log(scoreBlue) * 14)
-threshold_red = int(math.log(scoreRed) * 14)
-update_LEDs(initialize = True)
+    # Red Effect Button
+    GPIO.setup(18, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 18 to be an input pin and set initial value to be pulled High (off)
+    GPIO.add_event_detect(18,GPIO.RISING,callback=red_effect_button_callback,bouncetime=50) # Setup event on GPIO 18 rising edge
 
-# Setup GPIO for buttons
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False) # Ignore warning for now
+    # Blue Effect Button
+    GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 24 to be an input pin and set initial value to be pulled High (off)
+    GPIO.add_event_detect(24,GPIO.RISING,callback=blue_effect_button_callback,bouncetime=50) # Setup event on GPIO 24 rising edge
 
-# Red Effect Button
-GPIO.setup(18, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 18 to be an input pin and set initial value to be pulled High (off)
-GPIO.add_event_detect(18,GPIO.RISING,callback=red_effect_button_callback,bouncetime=50) # Setup event on GPIO 18 rising edge
+    # Red Score Button
+    GPIO.setup(19, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 19 to be an input pin and set initial value to be pulled High (off)
+    GPIO.add_event_detect(19,GPIO.RISING,callback=score_red_button_callback,bouncetime=50) # Setup event on GPIO 19 rising edge
 
-# Blue Effect Button
-GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 24 to be an input pin and set initial value to be pulled High (off)
-GPIO.add_event_detect(24,GPIO.RISING,callback=blue_effect_button_callback,bouncetime=50) # Setup event on GPIO 24 rising edge
+    # Blue Score Button
+    GPIO.setup(16, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 16 to be an input pin and set initial value to be pulled High (off)
+    GPIO.add_event_detect(16,GPIO.RISING,callback=score_blue_button_callback,bouncetime=50) # Setup event on GPIO 16 rising edge
 
-# Red Score Button
-GPIO.setup(19, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 19 to be an input pin and set initial value to be pulled High (off)
-GPIO.add_event_detect(19,GPIO.RISING,callback=score_red_button_callback,bouncetime=50) # Setup event on GPIO 19 rising edge
+    # Terminate
+    message = input("Press enter to quit\n\n") # Run until someone presses enter
+    GPIO.cleanup() # Clean up
+    reset_LEDs()
+    print("blue: {}, red: {}\n".format(scoreBlue,scoreRed))
 
-# Blue Score Button
-GPIO.setup(16, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 16 to be an input pin and set initial value to be pulled High (off)
-GPIO.add_event_detect(16,GPIO.RISING,callback=score_blue_button_callback,bouncetime=50) # Setup event on GPIO 16 rising edge
+    # End Main Function and Return 0 (considered a “successful termination”)
+    return 0 
 
-# Terminate
-message = input("Press enter to quit\n\n") # Run until someone presses enter
-GPIO.cleanup() # Clean up
-reset_LEDs()
-print("blue: {}, red: {}\n".format(scoreBlue,scoreRed))
-
+# Call main function if this is the top level Module 
+if __name__ == '__main__':
+    sys.exit(main()) 
