@@ -113,7 +113,7 @@ def sounds_test(soundList):
     for sound in soundList:
         sound.play()
         t = time.time()
-        while(pygame.mixer.get_busy() and (t+5 < time.time())):
+        while(pygame.mixer.get_busy() and (t+5 > time.time())):
             sleep(0.1)
 
 def sounds_init(redSoundList, blueSoundList):
