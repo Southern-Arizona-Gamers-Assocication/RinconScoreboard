@@ -6,6 +6,7 @@ import os
 import random
 import math
 import subprocess
+import threading
 
 from time import sleep
 
@@ -111,7 +112,20 @@ def sounds_load(dirname):
 def sounds_test(soundList):
     for sound in soundList:
         sound.play()
-        sleep(0.5)
+        t = time.time()
+        while(pygame.mixer.get_busy() and (t+5 < time.time())):
+            sleep(0.1)
+
+def sounds_init(redSoundList, blueSoundList):
+    print("Starting the initialization of the red and blue sounds.")
+    # Set Volume
+    cmd = subprocess.run(["/usr/bin/amixer","set","Master","30%"])
+    sounds_test(redSoundList)
+    sounds_test(blueSoundList)
+    cmd = subprocess.run(["/usr/bin/amixer","set","Master","100%"])
+    print("Finished the initialization of the red and blue sounds.")
+
+# -----------------------------------------------------------------------------
 
 # Define the "Main Function" which is called automatically if this is the top level Module by the last two lines 
 def main() -> int:
@@ -134,11 +148,9 @@ def main() -> int:
     pygame.init()
     bluesounds,bluesoundsnames = sounds_load('blue_sounds')
     redsounds,redsoundsnames = sounds_load('red_sounds')
-    # set Volume
-    cmd = subprocess.run(["/usr/bin/amixer","set","Master","30%"])
-    sounds_test(bluesounds)
-    sounds_test(redsounds)
-    cmd = subprocess.run(["/usr/bin/amixer","set","Master","100%"])
+    print("Calling the sound initialization Function.")
+    sounds_init(bluesounds, redsounds)
+    print("Returned from the sound initialization Function.")
 
     # prepare DMX
     # t = OpenDmxUsb()
