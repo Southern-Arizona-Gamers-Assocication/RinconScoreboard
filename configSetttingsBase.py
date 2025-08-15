@@ -33,14 +33,23 @@ class ConfigSettingsBase:
             raise TypeError("Argument Wrong Type: configFileSectionName needs to be a string with a length greather than 0")
         self.__configSettings__ = {}
         self.__settingsLoadedFromConfigFile__ = False 
+
     
     def _addConfigSetting(self, configFileSettingName: str, defaultValue, docString: str = ""):
         """This function adds a config setting to the instance of this class and returns a new partialmethod descriptor pointing to its getter."""
         self.__isValidConfigFileSettingName__(configFileSettingName, True)
-        x = partialmethod(self.__getConfigSetting__, configFileSettingName)
         self.__configSettings__[configFileSettingName] = defaultValue
-        return property(partialmethod(self.__getConfigSetting__, configFileSettingName),None,None, docString)
-
+        f = partialmethod(self.__getConfigSetting__, configFileSettingName)
+        f.__doc__ = configFileSettingName + "Test" + docString
+        return f
+    
+        '''    def _addConfigSetting(self, configFileSettingName: str, defaultValue, docString: str = ""):
+                """This function adds a config setting to the instance of this class and returns a new partialmethod descriptor pointing to its getter."""
+                self.__isValidConfigFileSettingName__(configFileSettingName, True)
+                x = partialmethod(self.__getConfigSetting__, configFileSettingName)
+                self.__configSettings__[configFileSettingName] = defaultValue
+                return property(partialmethod(self.__getConfigSetting__, configFileSettingName),None,None, docString)
+        '''
     def __getConfigSetting__(self, configFileSettingName: str) -> Any:
         """This function is primarily used as a getter for the settings stored in this (or an inherited) class."""
         self.__isValidConfigFileSettingName__(configFileSettingName, False)

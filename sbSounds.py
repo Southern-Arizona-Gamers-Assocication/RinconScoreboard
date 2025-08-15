@@ -72,7 +72,7 @@ class sbSounds:
         if self.settings.haveSettingBeenLoadedFromConfigFile() or (__name__ == '__main__'):
             # Load Red sounds group directory
             print("Loading the red sounds.")
-            redGroup = str(self.settings.Directory_Red_Sounds)
+            redGroup = str(self.settings.Directory_Red_Sounds())
             self.loadSoundsFromDirectory(redGroup)
             self.getRedSounds = partialmethod(self.getSoundsByGroup, redGroup)
             self.getRedSounds.__doc__ = "Returns a copy of the red sounds dictionary."
@@ -80,7 +80,7 @@ class sbSounds:
             self.getRedSoundsList.__doc__ = "Returns a list of the red sounds."
 
             print("Loading the blue sounds.")
-            blueGroup = str(self.settings.Directory_Blue_Sounds)
+            blueGroup = str(self.settings.Directory_Blue_Sounds())
             self.loadSoundsFromDirectory(blueGroup)
             self.getRedSounds = partialmethod(self.getSoundsByGroup, blueGroup)
             self.getRedSounds.__doc__ = "Returns a copy of the red sounds dictionary."
@@ -89,12 +89,12 @@ class sbSounds:
 
             print("Starting the test for all of the sounds")
             # Set Volume
-            self.setVolume(self.settings.Volume_Sound_Test)
+            self.setVolume(self.settings.Volume_Sound_Test())
             for sound in self.getAllSoundsList():
                 sound.play()
                 while(pygame.mixer.get_busy()):
                     time.sleep(0.1)
-            self.setVolume(self.settings.Volume_Percent_Normal)
+            self.setVolume(self.settings.Volume_Percent_Normal())
             print("Finished the initialization of the red and blue sounds.")
 
         else:
