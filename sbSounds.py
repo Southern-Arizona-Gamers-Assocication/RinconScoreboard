@@ -14,7 +14,7 @@ import time
 
 import pygame # for audio files
 
-from .configSetttingsBase import ConfigSettingsBase
+from configSetttingsBase import ConfigSettingsBase
 
 # SoundConfig description: Holds all the settings 
 # Instantiation Syntax: SoundConfig()
@@ -72,7 +72,7 @@ class sbSounds:
         if self.settings.haveSettingBeenLoadedFromConfigFile() or (__name__ == '__main__'):
             # Load Red sounds group directory
             print("Loading the red sounds.")
-            redGroup = self.settings.Directory_Red_Sounds
+            redGroup = str(self.settings.Directory_Red_Sounds)
             self.loadSoundsFromDirectory(redGroup)
             self.getRedSounds = partialmethod(self.getSoundsByGroup, redGroup)
             self.getRedSounds.__doc__ = "Returns a copy of the red sounds dictionary."
@@ -80,7 +80,7 @@ class sbSounds:
             self.getRedSoundsList.__doc__ = "Returns a list of the red sounds."
 
             print("Loading the blue sounds.")
-            blueGroup = self.settings.Directory_Blue_Sounds
+            blueGroup = str(self.settings.Directory_Blue_Sounds)
             self.loadSoundsFromDirectory(blueGroup)
             self.getRedSounds = partialmethod(self.getSoundsByGroup, blueGroup)
             self.getRedSounds.__doc__ = "Returns a copy of the red sounds dictionary."
