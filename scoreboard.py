@@ -112,9 +112,8 @@ def sounds_load(dirname):
 def sounds_test(soundList):
     for sound in soundList:
         sound.play()
-        t = time.time()
-        while(pygame.mixer.get_busy() and (t+5 > time.time())):
-            sleep(0.1)
+        while(pygame.mixer.get_busy()):
+            time.sleep(0.1)
 
 def sounds_init(redSoundList, blueSoundList):
     print("Starting the initialization of the red and blue sounds.")
@@ -191,9 +190,10 @@ def main() -> int:
     reset_LEDs()
     print("blue: {}, red: {}\n".format(scoreBlue,scoreRed))
 
-    # End Main Function and Return 0 (considered a “successful termination”)
+    # End Main Function and Return 0 
+    # 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)
     return 0 
 
 # Call main function if this is the top level Module 
 if __name__ == '__main__':
-    sys.exit(main()) 
+    sys.exit(main())  
