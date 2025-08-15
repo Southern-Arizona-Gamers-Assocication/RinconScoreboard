@@ -70,6 +70,7 @@ class sbSounds:
     def setupSounds(self) -> None:
         """Setup and initialize the sound system."""
         if self.settings.haveSettingBeenLoadedFromConfigFile() or (__name__ == '__main__'):
+            pygame.init()
             # Load Red sounds group directory
             print("Loading the red sounds.")
             redGroup = self.settings.Directory_Red_Sounds()
