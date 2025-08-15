@@ -6,7 +6,7 @@
 # 
 
 from ast import Load
-from functools import partialmethod
+from functools import partial, partialmethod
 import sys   # System-specific parameters and functions
 import os    # Miscellaneous operating system interfaces
 import subprocess
@@ -72,19 +72,19 @@ class sbSounds:
         if self.settings.haveSettingBeenLoadedFromConfigFile() or (__name__ == '__main__'):
             # Load Red sounds group directory
             print("Loading the red sounds.")
-            redGroup = str(self.settings.Directory_Red_Sounds())
+            redGroup = self.settings.Directory_Red_Sounds()
             self.loadSoundsFromDirectory(redGroup)
-            self.getRedSounds = partialmethod(self.getSoundsByGroup, redGroup)
+            self.getRedSounds = partial(self.getSoundsByGroup, redGroup)
             self.getRedSounds.__doc__ = "Returns a copy of the red sounds dictionary."
-            self.getRedSoundsList = partialmethod(self.getListSoundsByGroup, redGroup)
+            self.getRedSoundsList = partial(self.getListSoundsByGroup, redGroup)
             self.getRedSoundsList.__doc__ = "Returns a list of the red sounds."
 
             print("Loading the blue sounds.")
             blueGroup = str(self.settings.Directory_Blue_Sounds())
             self.loadSoundsFromDirectory(blueGroup)
-            self.getRedSounds = partialmethod(self.getSoundsByGroup, blueGroup)
+            self.getRedSounds = partial(self.getSoundsByGroup, blueGroup)
             self.getRedSounds.__doc__ = "Returns a copy of the red sounds dictionary."
-            self.getRedSoundsList = partialmethod(self.getListSoundsByGroup, blueGroup)
+            self.getRedSoundsList = partial(self.getListSoundsByGroup, blueGroup)
             self.getRedSoundsList.__doc__ = "Returns a list of the red sounds."
 
             print("Starting the test for all of the sounds")

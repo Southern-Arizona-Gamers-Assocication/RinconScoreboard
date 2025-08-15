@@ -39,7 +39,7 @@ class ConfigSettingsBase:
         """This function adds a config setting to the instance of this class and returns a new partialmethod descriptor pointing to its getter."""
         self.__isValidConfigFileSettingName__(configFileSettingName, True)
         self.__configSettings__[configFileSettingName] = defaultValue
-        f = partialmethod(self.__getConfigSetting__, configFileSettingName)
+        f = partial(self.__getConfigSetting__, configFileSettingName)
         f.__doc__ = configFileSettingName + "Test" + docString
         return f
     
