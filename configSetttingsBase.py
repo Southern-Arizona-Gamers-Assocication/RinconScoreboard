@@ -8,8 +8,7 @@
 #import sys   # System-specific parameters and functions
 #import os    # Miscellaneous operating system interfaces
 import configparser
-from functools import partial, partialmethod
-from typing import Any
+from functools import partial
 
 # ConfigSettings description: This is the basic settings configuration class.  This class 
 #           should be used as the base class for application specific classes to inherit
@@ -41,22 +40,27 @@ class ConfigSettingsBase:
         self.__configSettings__[configFileSettingName] = defaultValue
         f = partial(self.__getConfigSetting__, configFileSettingName)
         f.__doc__ = configFileSettingName + "Test" + docString
+        f.__annotations__['return'] = type(defaultValue)
         return f
-    
-        '''    def _addConfigSetting(self, configFileSettingName: str, defaultValue, docString: str = ""):
-                """This function adds a config setting to the instance of this class and returns a new partialmethod descriptor pointing to its getter."""
-                self.__isValidConfigFileSettingName__(configFileSettingName, True)
-                x = partialmethod(self.__getConfigSetting__, configFileSettingName)
-                self.__configSettings__[configFileSettingName] = defaultValue
-                return property(partialmethod(self.__getConfigSetting__, configFileSettingName),None,None, docString)
-        '''
-    def __getConfigSetting__(self, configFileSettingName: str) -> Any:
+
+    def __getConfigSetting__(self, configFileSettingName: str):
         """This function is primarily used as a getter for the settings stored in this (or an inherited) class."""
         self.__isValidConfigFileSettingName__(configFileSettingName, False)
         # All checks passed return value
         return self.__configSettings__[configFileSettingName]
 
     def __isValidConfigFileSettingName__(self, configFileSettingName: str, isNameNew: bool = False) -> bool:
+        """
+        Docstring for __isValidConfigFileSettingName__
+        
+        :param configFileSettingName: Description
+        :type configFileSettingName: str
+        :param isNameNew: Description
+        :type isNameNew: bool
+        :return: Description
+        :rtype: bool
+        """
+
         """This function returns True if the setting name is valid and raises an exception otherwise."""
         if type(configFileSettingName) is str:
             if len(configFileSettingName) > 0:
