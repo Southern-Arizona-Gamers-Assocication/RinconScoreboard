@@ -8,6 +8,7 @@ import math
 import subprocess
 import threading
 
+from sbSounds import sbSounds
 from time import sleep
 
 import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
@@ -21,7 +22,7 @@ import adafruit_dotstar as dotstar # Adafruit DotStar library
 # from ftdi.dmx_controller.OpenDmxUsb import OpenDmxUsb
 
 # button callback functions
-def blue_effect_button_callback(channel):
+def button_blue_effect(channel):
     global bluesounds
     rand = random.randint(0,len(bluesounds) - 1)
     if  (not pygame.mixer.get_busy()):
@@ -34,7 +35,7 @@ def blue_effect_button_callback(channel):
     # while time.time() < t_end:
     #     t.send_dmx([255,0,0,255])
 
-def red_effect_button_callback(channel):
+def button_red_effect(channel):
     global redsounds
     rand = random.randint(0,len(redsounds) - 1)
     if  (not pygame.mixer.get_busy()):
@@ -124,6 +125,7 @@ def sounds_init(redSoundList, blueSoundList):
     cmd = subprocess.run(["/usr/bin/amixer","set","Master","100%"])
     print("Finished the initialization of the red and blue sounds.")
 
+
 # -----------------------------------------------------------------------------
 
 # Define the "Main Function" which is called automatically if this is the top level Module by the last two lines 
@@ -170,11 +172,11 @@ def main() -> int:
 
     # Red Effect Button
     GPIO.setup(18, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 18 to be an input pin and set initial value to be pulled High (off)
-    GPIO.add_event_detect(18,GPIO.RISING,callback=red_effect_button_callback,bouncetime=50) # Setup event on GPIO 18 rising edge
+    GPIO.add_event_detect(18,GPIO.RISING,callback=button_red_effect,bouncetime=50) # Setup event on GPIO 18 rising edge
 
     # Blue Effect Button
     GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 24 to be an input pin and set initial value to be pulled High (off)
-    GPIO.add_event_detect(24,GPIO.RISING,callback=blue_effect_button_callback,bouncetime=50) # Setup event on GPIO 24 rising edge
+    GPIO.add_event_detect(24,GPIO.RISING,callback=button_blue_effect,bouncetime=50) # Setup event on GPIO 24 rising edge
 
     # Red Score Button
     GPIO.setup(19, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 19 to be an input pin and set initial value to be pulled High (off)

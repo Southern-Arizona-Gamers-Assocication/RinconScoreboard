@@ -7,7 +7,7 @@
 
 #import sys   # System-specific parameters and functions
 #import os    # Miscellaneous operating system interfaces  
-from configparser import ConfigParser
+#from configparser import ConfigParser
 
 # Instantiation Syntax: ConfigSettingsBase()
 class ConfigSettingsBase:
@@ -96,7 +96,7 @@ class ConfigSettingsBase:
         def convertStr2ValueType(self, valueString: str):
             """"""
             return self.valType(valueString)
-    # end of class ConfigSetting
+    # End of class ConfigSetting
 
     class ConfigSettingBool(ConfigSetting):
         """"""
@@ -119,7 +119,7 @@ class ConfigSettingsBase:
                     return False
                 case _:
                     raise ValueError("")
-    # end of class ConfigSettingBool
+    # End of class ConfigSettingBool
 
     __configSettings__: dict[str, ConfigSetting] = {}
 
@@ -156,7 +156,7 @@ class ConfigSettingsBase:
     def allSectionSsettingsAreUpdated(self) -> bool:
         #return self.__settingsLoadedFromConfigFile__
         return self.__allSectionSsettingsUpdated__
-# end of class ConfigSettingsBase
+# End of class ConfigSettingsBase
 
 # -----------------------------------------------------------------------------
 # No main function because this Module is designed to only be a base class that 
