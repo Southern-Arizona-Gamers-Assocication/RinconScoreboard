@@ -26,7 +26,7 @@ class ConfigSettingsBase:
         """
         # Execute the a base classes __init__() 
         #super().__init__(configFileSectionName)
-        print(f"Initializing ConfigSettingsBase with a Section Name = '{configFileSectionName}'")
+        #print(f"Initializing ConfigSettingsBase with a Section Name = '{configFileSectionName}'")
         if type(configFileSectionName) is str:
             if len(configFileSectionName) > 0:
                 # The Stores the name of the Section in the config file.  
@@ -37,24 +37,24 @@ class ConfigSettingsBase:
             raise TypeError("Argument Needed: configFileSectionName needs to be a string with a length greather than 0")
         else:
             raise TypeError("Argument Wrong Type: configFileSectionName needs to be a string with a length greather than 0")
-        #self.__configSettings__ = {}
+        #self.printAllSettings()
         self.__allSectionSsettingsUpdated__ = False 
 
     class ConfigSetting:
         """"""
+        def __init__(self, defaultValue) -> None:
+            #print(f"Setting default value for: '{defaultValue}'")
+            self.__value__ = defaultValue
+            self.valType = type(defaultValue)
+
         def __set_name__(self, owner, name) -> None:
-            print(f"Name is set for '{owner}.{name}'")
-            if hasattr(owner, name):
-                raise AttributeError(f"Name '{name}' is already used in the {owner.__class__.__name__} class.")
+            #print(f"Name is set for '{owner}.{name}'")
+            #if hasattr(owner, name):
+            #    raise AttributeError(f"Name '{name}' is already used in the {owner.__class__.__name__} class.")
             self.__name__ = name
             self.__owner__ = owner
             owner.__configSettings__[name] = self
         
-        def __init__(self, defaultValue) -> None:
-            print(f"Setting default value: '{defaultValue}'")
-            self.__value__ = defaultValue
-            self.valType = type(defaultValue)
-
         def __get__(self, instance, owningClass=None):
             """"""
             return self.__value__
@@ -73,7 +73,7 @@ class ConfigSettingsBase:
             :return: A string representation of the value. 
             :rtype: str
             """
-            print(f"Outputing {self.__name__} as a String Value")
+            #print(f"Outputing {self.__name__} as a String Value")
             return self.__value__.__repr__()
         
         def updateFromSettingsDict(self, settings: dict[str, str]):
@@ -100,6 +100,17 @@ class ConfigSettingsBase:
 
     class ConfigSettingBool(ConfigSetting):
         """"""
+        def __init__(self, defaultValue) -> None:
+            #print(f"Setting default value for: '{defaultValue}'")
+            self.__value__ = defaultValue
+            self.valType = bool
+            if isinstance(defaultValue, bool):
+                self.__value__ = defaultValue
+            elif isinstance(defaultValue, str):
+                self.__value__ = self.convertStr2ValueType(defaultValue)
+            else:
+                self.__value__ = self.convertStr2ValueType(str(defaultValue))
+
         def convertStr2ValueType(self, valueString: str) -> bool:
             """
             convertStr2ValueType does a match reguarless of case to return True or False. If a match is not 
@@ -112,13 +123,14 @@ class ConfigSettingsBase:
             :return: True if trueString is matched. False of a falseString is matched.
             :rtype: bool
             """
-            match valueString.lower():
-                case ["true", "1", "on", "yes"]:
-                    return True
-                case ["false", "0", "off", "no"]:
-                    return False
-                case _:
-                    raise ValueError("")
+            boolText = {"true": True, "1": True, "on": True, "yes": True, 
+                        "false": False, "0": False, "off": False, "no": False}
+            s = valueString.lower()
+            if s in boolText:
+                return boolText[s]
+            else:
+                raise ValueError(f"ERROR: Unable to Convert '{valueString}' to a bool. This method's Docstring:\n" + 
+                                     "")
     # End of class ConfigSettingBool
 
     __configSettings__: dict[str, ConfigSetting] = {}
@@ -134,7 +146,7 @@ class ConfigSettingsBase:
             settings[name] = str(value)
         return settings
 
-    def setAllSectionSettings(self, settings: dict[str, str]):
+    def updateAllSectionSettings(self, settings: dict[str, str]):
     #def sectionSettings(self, config: configparser.ConfigParser):
         """Sets Config Settings from a ConfigParser instance. {self:'instanceName'}.sectionAllSettings(settings) will invoke this getter."""
         #settings_test = config[self.sectionName]
@@ -156,6 +168,13 @@ class ConfigSettingsBase:
     def allSectionSsettingsAreUpdated(self) -> bool:
         #return self.__settingsLoadedFromConfigFile__
         return self.__allSectionSsettingsUpdated__
+
+    def printAllSettings(self):
+        """"""
+        print(f"All settings for section: '{self.sectionName()}'")
+        for sName in self.__configSettings__.keys():
+            print(f"\t'{sName}'='{self.__configSettings__[sName]}' as type: {self.__configSettings__[sName]}")
+
 # End of class ConfigSettingsBase
 
 # -----------------------------------------------------------------------------

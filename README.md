@@ -2,7 +2,8 @@ starting up ssh
 % eval "$(ssh-agent -s)"
 % ssh-add ~/.ssh/id_ed25519
 
-
+# Must be run in a virtual environment (venv).
+# Start venv:
 % source venv/bin/activate
 % python scoreboard.py
 # to leave venv:

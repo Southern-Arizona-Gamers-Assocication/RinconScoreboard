@@ -50,6 +50,26 @@ class configFileParser:
         for sectionName in self.configSections.keys():
             self.config[sectionName] = self.configSections[sectionName].getAllSectionSettings()
 
+    def readConfigFile(self):
+        """"""
+        with open(self.__configFileName__, "r", encoding="utf-8") as f:
+            self.config.read_file(f)
+        self.updateAllSectionsFromConfig()
+    
+    def updateAllSectionsFromConfig(self):
+        """"""
+        for sectionName in self.config.sections():
+            if sectionName in self.configSections:
+                self.configSections[sectionName].updateAllSectionSettings(dict(self.config.items(sectionName)))
+            else:
+                raise KeyError(f"ERROR: ConfigFile '{self.__configFileName__}' section name '{sectionName}' is not " + 
+                               "a know section name. Is the section name spelled correctly?")
+    
+    def writeConfigFile(self):
+        """"""
+        with open(self.__configFileName__, "w", encoding="utf-8") as f:
+            self.config.write(f)
+
     def printConfig(self):
         """"""
         print("Current configuration tree:")
@@ -66,13 +86,40 @@ class configFileParser:
 def main() -> int:
     """This is the "Main" function which is called automatically by the last two lines if this is the top level Module. 'Import this_file' will not call main().
     """
+    import argparse
+    pCmdLine = argparse.ArgumentParser()
+    pCmdLine.add_argument("-f", "--FileName", type=str, help="Use this Configuration File inplace default file.")
+    pCmdLine.add_argument("-w", "--writeConfig", action="store_true", help="Write to file is true.")
+    pCmdLine.add_argument("-n", "--noReadConfig", action="store_false", help="Write to file is true.")
+    args = pCmdLine.parse_args()
+
+    # Import Local modules here.
     from sbSounds import SoundSettingsConfig
+    print("Import done for local modules.")
+    # Setup Done now run tests
+    
+    if args.FileName is None:
+        fName = "sbSoundsConfig"
+    else:
+        fName = args.FileName
+    conf = configFileParser(fName)
+    print("Assign configFileParser object.")
+
     soundSettings = SoundSettingsConfig()
+    print("Assign config sections.")
 
-    conf = configFileParser("sbSoundsConfig")
     conf.registerSettingsSection(soundSettings)
+    print("Done Registering config sections")
 
+    soundSettings.printAllSettings()
     conf.printConfig()
+
+    if not args.noReadConfig:
+        conf.readConfigFile()
+
+    if args.writeConfig:
+        conf.writeConfigFile()
+
     # Return 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)
     return 0 
 # End of main() Function  

@@ -26,8 +26,6 @@ class SoundSettingsConfig(ConfigSettingsBase):
     def __init__(self) -> None:
         # Execute the a base classes __init__() 
         super().__init__("SoundSettings")
-        print(f"All settings for section: {self.sectionName()}")
-        print(self.__configSettings__)
 
     Directory_Red_Sounds = ConfigSettingsBase.ConfigSetting("red_sounds")
     Directory_Blue_Sounds = ConfigSettingsBase.ConfigSetting("blue_sounds")
