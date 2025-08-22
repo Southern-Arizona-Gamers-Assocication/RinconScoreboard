@@ -145,6 +145,10 @@ def main() -> int:
     buttons.redEffect_PlaySound = sounds.playRandomRedSong
     buttons.blueEffect_PlaySound = sounds.playRandomBlueSong
 
+    message = input("Press enter to quit\n\n") # Run until someone presses enter
+    GPIO.cleanup() # Clean up
+    print(f"blue: {buttons.scoreBlue}, red: {buttons.scoreRed}\n")
+
     # Return 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)
     return 0 
 # End of main() Function  
