@@ -150,7 +150,7 @@ class ConfigSettingsBase:
             if name in settings:
                 cSetting.updateFromSettingsDict(settings)
             else:
-                print("Config Warning: '{0:s}; {1:s}' is NOT Found in config file./n/t Using default value."
+                print("Config Warning: '{0:s};{1:s}' is NOT Found in config file./n/t Using default value."
                       .format(self.sectionName(), name))
         for name in settings.keys():
             if name not in self.__configSettings__:
