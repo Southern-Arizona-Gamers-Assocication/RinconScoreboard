@@ -22,7 +22,7 @@ class ButtonsSettingsConfig(ConfigSettingsBase):
         # Execute the a base classes __init__() 
         super().__init__("Button Settings")
 
-    Scores_File = ConfigSettingsBase.ConfigSettingBool("scores.txt")
+    Scores_File = ConfigSettingsBase.ConfigSetting("scores.txt")
     GPIO_PinNum_Effect_Red = ConfigSettingsBase.ConfigSetting(18)
     GPIO_PinNum_Effect_Blue = ConfigSettingsBase.ConfigSetting(24)
     GPIO_PinNum_Score_Red = ConfigSettingsBase.ConfigSetting(19)
