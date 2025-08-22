@@ -96,6 +96,7 @@ def main() -> int:
 
     # Import Local modules here.
     from sbSounds import SoundSettingsConfig
+    from sbButtonsInterface import ButtonsSettingsConfig
     print("Import done for local modules.")
     # Setup Done now run tests
     
@@ -108,6 +109,7 @@ def main() -> int:
 
     soundSettings = SoundSettingsConfig()
     soundSettings.printAllSettings()
+    buttonSettings = ButtonsSettingsConfig()
     print("Done assigning config sections.")
 
     conf.registerSettingsSection(soundSettings)

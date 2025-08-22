@@ -25,7 +25,7 @@ class SoundSettingsConfig(ConfigSettingsBase):
     # Customize the current instance to a specific initial state.
     def __init__(self) -> None:
         # Execute the a base classes __init__() 
-        super().__init__("SoundSettings")
+        super().__init__("Sound Settings")
 
     Directory_Red_Sounds = ConfigSettingsBase.ConfigSetting("red_sounds")
     Directory_Blue_Sounds = ConfigSettingsBase.ConfigSetting("blue_sounds")
