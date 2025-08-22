@@ -6,7 +6,7 @@
 
 import sys   # System-specific parameters and functions
 import os    # Miscellaneous operating system interfaces
-from configparser import ConfigParser
+from configparser import ConfigParser, ExtendedInterpolation
 
 from configSetttingsBase import ConfigSettingsBase
 import configSetttingsBase
@@ -26,14 +26,15 @@ class configFileParser:
         """
         self.__configFileName__ = configFileName
         self.configSections: dict[str, ConfigSettingsBase] = {}
-        self.config = ConfigParser()
+        self.config = ConfigParser(interpolation=ExtendedInterpolation())
+        self.config.optionxform = str
     
     def registerSettingsSection(self, sectionSettings: ConfigSettingsBase):
         """
         registerSettingsSection Registers a setting section and loads the settings into the ConfigParcser
 
         :param Settings: The settings from the class ConfigSettingsBase or one of its Subclasses. 
-        :type Settings: ConfigSettingsBase
+        :type Settings: ConfigSettingsBases
         """
         if not isinstance(sectionSettings, ConfigSettingsBase):
             raise TypeError(f"Error with registeringSettingsSection argument of type {type(sectionSettings)}. The type should be 'class ConfigSettingsBase'")
@@ -75,7 +76,7 @@ class configFileParser:
         print("Current configuration tree:")
         for sName in self.config.sections():
             for oName in self.config.options(sName):
-                print(f"[{sName}][{oName}]'{self.config.get(sName, oName)}'")
+                print(f"[{sName}][{oName}] = '{self.config.get(sName, oName)}'")
 
 
 # End of class className
@@ -90,7 +91,7 @@ def main() -> int:
     pCmdLine = argparse.ArgumentParser()
     pCmdLine.add_argument("-f", "--FileName", type=str, help="Use this Configuration File inplace default file.")
     pCmdLine.add_argument("-w", "--writeConfig", action="store_true", help="Write to file is true.")
-    pCmdLine.add_argument("-n", "--noReadConfig", action="store_false", help="Write to file is true.")
+    pCmdLine.add_argument("-n", "--noReadConfig", action="store_true", help="Write to file is true.")
     args = pCmdLine.parse_args()
 
     # Import Local modules here.
@@ -103,19 +104,23 @@ def main() -> int:
     else:
         fName = args.FileName
     conf = configFileParser(fName)
-    print("Assign configFileParser object.")
+    print("Done assigning configFileParser.")
 
     soundSettings = SoundSettingsConfig()
-    print("Assign config sections.")
+    soundSettings.printAllSettings()
+    print("Done assigning config sections.")
 
     conf.registerSettingsSection(soundSettings)
-    print("Done Registering config sections")
+    print("Done registering config sections.")
 
-    soundSettings.printAllSettings()
     conf.printConfig()
 
+    print(f"Don't read confing file: {args.noReadConfig}")
     if not args.noReadConfig:
         conf.readConfigFile()
+
+    conf.printConfig()
+    soundSettings.printAllSettings()
 
     if args.writeConfig:
         conf.writeConfigFile()

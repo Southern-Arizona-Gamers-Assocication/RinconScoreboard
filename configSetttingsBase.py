@@ -43,9 +43,9 @@ class ConfigSettingsBase:
     class ConfigSetting:
         """"""
         def __init__(self, defaultValue) -> None:
-            #print(f"Setting default value for: '{defaultValue}'")
             self.__value__ = defaultValue
             self.valType = type(defaultValue)
+            #print(f"default value: '{defaultValue}'; '{self.__value__}'")
 
         def __set_name__(self, owner, name) -> None:
             #print(f"Name is set for '{owner}.{name}'")
@@ -73,8 +73,7 @@ class ConfigSettingsBase:
             :return: A string representation of the value. 
             :rtype: str
             """
-            #print(f"Outputing {self.__name__} as a String Value")
-            return self.__value__.__repr__()
+            return self.__value__.__str__()
         
         def updateFromSettingsDict(self, settings: dict[str, str]):
             """"""
@@ -91,7 +90,7 @@ class ConfigSettingsBase:
                     valErr.add_note(msg + "Default value not present therefore cannot procede.")
                     raise 
                 else:
-                    print(msg + "Therefore the defalt value will be used.")
+                    print(msg + "Therefore the default value will be used.")
 
         def convertStr2ValueType(self, valueString: str):
             """"""
@@ -102,7 +101,6 @@ class ConfigSettingsBase:
         """"""
         def __init__(self, defaultValue) -> None:
             #print(f"Setting default value for: '{defaultValue}'")
-            self.__value__ = defaultValue
             self.valType = bool
             if isinstance(defaultValue, bool):
                 self.__value__ = defaultValue
@@ -147,22 +145,17 @@ class ConfigSettingsBase:
         return settings
 
     def updateAllSectionSettings(self, settings: dict[str, str]):
-    #def sectionSettings(self, config: configparser.ConfigParser):
         """Sets Config Settings from a ConfigParser instance. {self:'instanceName'}.sectionAllSettings(settings) will invoke this getter."""
-        #settings_test = config[self.sectionName]
-        print("'Debug --> type(settings) {0:s} ".format(type(settings)))
         for name, cSetting in self.__configSettings__.items():
-            print("Settings value '{0:s};{1:s}' = '{2:s}' is a {3:s}./n * Config File Entry value: '{4:s}'"
-                  .format(self.sectionName, name, cSetting, cSetting.valType, settings[name]))
             if name in settings:
                 cSetting.updateFromSettingsDict(settings)
             else:
                 print("Config Warning: '{0:s}; {1:s}' is NOT Found in config file./n/t Using default value."
-                      .format(self.sectionName,name))
+                      .format(self.sectionName(), name))
         for name in settings.keys():
             if name not in self.__configSettings__:
                 print("Config Warning: '{0:s}; {1:s}' is not used./n/t Is it spelled correctly or deprecated?"
-                      .format(self.sectionName,name))
+                      .format(self.sectionName(),name))
         self.__allSectionSsettingsUpdated__ = True
 
     def allSectionSsettingsAreUpdated(self) -> bool:
@@ -173,7 +166,7 @@ class ConfigSettingsBase:
         """"""
         print(f"All settings for section: '{self.sectionName()}'")
         for sName in self.__configSettings__.keys():
-            print(f"\t'{sName}'='{self.__configSettings__[sName]}' as type: {self.__configSettings__[sName]}")
+            print(f"  Name: '{sName}' Type: {self.__configSettings__[sName].valType} Value: '{self.__configSettings__[sName]}'")
 
 # End of class ConfigSettingsBase
 

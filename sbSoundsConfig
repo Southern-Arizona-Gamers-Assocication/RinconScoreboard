@@ -1,0 +1,8 @@
+[SoundSettings]
+Directory_Red_Sounds = red_sounds
+Directory_Blue_Sounds = blue_sounds
+Volume_Percent_Normal = 100%
+SoundTest_Volume = 30%
+SoundTest_Wait_for_Sound_End = Yes
+SoundTest_Print_Sound_Duration = Yes
+SoundTest_Sound_Duration_Timeout = 5.0000
