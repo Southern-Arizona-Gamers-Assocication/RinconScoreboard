@@ -38,7 +38,7 @@ class ConfigSettingsBase:
         else:
             raise TypeError("Argument Wrong Type: configFileSectionName needs to be a string with a length greather than 0")
         #self.printAllSettings()
-        self.__allSectionSsettingsUpdated__ = False 
+        self.__allSectionSsettingsUpdated__ = True 
 
     class ConfigSetting:
         """"""
