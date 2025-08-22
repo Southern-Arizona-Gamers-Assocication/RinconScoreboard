@@ -116,7 +116,7 @@ class sbSounds:
         print("Starting the test for all of the sounds")
         # Set Volume
         self.setVolume(self.settings.SoundTest_Volume)
-        for sound, name in self.getAllSoundsList(), self.getAllSoundNamesList():
+        for name,sound in self.getAllsounds():
             print(f"Playing sound: {name} ", end="")
             sound.play()
             while(pygame.mixer.get_busy()):
