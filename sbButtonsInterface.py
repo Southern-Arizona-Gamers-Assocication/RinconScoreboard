@@ -8,11 +8,12 @@ import sys   # System-specific parameters and functions
 #import os    # Miscellaneous operating system interfaces
 
 try:
-    import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
+    # Import Raspberry Pi GPIO library
+    import RPi.GPIO as GPIO # pyright: ignore[reportMissingImports]
 except ModuleNotFoundError:
-    print("Module Pygames Not Found. Don't use class sbSound.")
+    print("Module RPi.GPIO Not Found. Don't use class sbButtonsInterface.")
 
-from configSetttingsBase import ConfigSettingsBase
+from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool
 
 # SoundConfig description: Holds all the sound settings
 # Instantiation Syntax: SoundConfig()
@@ -22,12 +23,12 @@ class ButtonsSettingsConfig(ConfigSettingsBase):
         # Execute the a base classes __init__() 
         super().__init__("Button Settings")
 
-    Scores_File = ConfigSettingsBase.ConfigSetting("scores.txt")
-    GPIO_PinNum_Effect_Red = ConfigSettingsBase.ConfigSetting(18)
-    GPIO_PinNum_Effect_Blue = ConfigSettingsBase.ConfigSetting(24)
-    GPIO_PinNum_Score_Red = ConfigSettingsBase.ConfigSetting(19)
-    GPIO_PinNum_Score_Blue = ConfigSettingsBase.ConfigSetting(16)
-    See_GPIO_Warnings = ConfigSettingsBase.ConfigSettingBool("No")
+    Scores_File = ConfigSetting("scores.txt")
+    GPIO_PinNum_Effect_Red = ConfigSetting(18)
+    GPIO_PinNum_Effect_Blue = ConfigSetting(24)
+    GPIO_PinNum_Score_Red = ConfigSetting(19)
+    GPIO_PinNum_Score_Blue = ConfigSetting(16)
+    See_GPIO_Warnings = ConfigSettingBool("No")
 
 # End of class SoundSettingsConfig
 
@@ -55,36 +56,45 @@ class sbButtonsInterface:
         """"""
         self.readScoresFromFile()
         # Setup GPIO for buttons
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(self.settings.See_GPIO_Warnings) # Ignore warning for now
+        GPIO.setmode(GPIO.BCM) # pyright: ignore[reportPossiblyUnboundVariable]
+        # Ignore warning for now 
+        GPIO.setwarnings(self.settings.See_GPIO_Warnings) # pyright: ignore[reportPossiblyUnboundVariable]
 
         # Red Effect Button
-        GPIO.setup(self.settings.GPIO_PinNum_Effect_Red, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 18 to be an input pin and set initial value to be pulled High (off)
-        GPIO.add_event_detect(self.settings.GPIO_PinNum_Effect_Red,
-                              GPIO.RISING,
+         # Set GPIO 18 to be an input pin and set initial value to be pulled High (off)
+        GPIO.setup(self.settings.GPIO_PinNum_Effect_Red, GPIO.IN, pull_up_down=GPIO.PUD_UP) # pyright: ignore[reportPossiblyUnboundVariable]
+        # Setup event on GPIO 18 rising edge
+        GPIO.add_event_detect(self.settings.GPIO_PinNum_Effect_Red, # pyright: ignore[reportPossiblyUnboundVariable]
+                              GPIO.RISING,                          # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.effectRedCallBack,
-                              bouncetime=50) # Setup event on GPIO 18 rising edge
+                              bouncetime=50) 
 
         # Blue Effect Button
-        GPIO.setup(self.settings.GPIO_PinNum_Effect_Blue, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 24 to be an input pin and set initial value to be pulled High (off)
-        GPIO.add_event_detect(self.settings.GPIO_PinNum_Effect_Blue,
-                              GPIO.RISING,
+        # Set GPIO 24 to be an input pin and set initial value to be pulled High (off)
+        GPIO.setup(self.settings.GPIO_PinNum_Effect_Blue, GPIO.IN, pull_up_down=GPIO.PUD_UP) # pyright: ignore[reportPossiblyUnboundVariable]
+        # Setup event on GPIO 24 rising edge
+        GPIO.add_event_detect(self.settings.GPIO_PinNum_Effect_Blue, # pyright: ignore[reportPossiblyUnboundVariable]
+                              GPIO.RISING,                           # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.effectBlueCallBack,
-                              bouncetime=50) # Setup event on GPIO 24 rising edge
+                              bouncetime=50) 
 
         # Red Score Button
-        GPIO.setup(self.settings.GPIO_PinNum_Score_Red, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 19 to be an input pin and set initial value to be pulled High (off)
-        GPIO.add_event_detect(self.settings.GPIO_PinNum_Score_Red,
-                              GPIO.RISING,
+        # Set GPIO 19 to be an input pin and set initial value to be pulled High (off)
+        GPIO.setup(self.settings.GPIO_PinNum_Score_Red, GPIO.IN, pull_up_down=GPIO.PUD_UP) # pyright: ignore[reportPossiblyUnboundVariable]
+        # Setup event on GPIO 19 rising edge
+        GPIO.add_event_detect(self.settings.GPIO_PinNum_Score_Red, # pyright: ignore[reportPossiblyUnboundVariable]
+                              GPIO.RISING,                         # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.scoreRedCallBack,
-                              bouncetime=50) # Setup event on GPIO 19 rising edge
+                              bouncetime=50) 
 
         # Blue Score Button
-        GPIO.setup(self.settings.GPIO_PinNum_Score_Blue, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Set GPIO 16 to be an input pin and set initial value to be pulled High (off)
-        GPIO.add_event_detect(self.settings.GPIO_PinNum_Score_Blue,
-                              GPIO.RISING,
+        # Set GPIO 16 to be an input pin and set initial value to be pulled High (off)
+        GPIO.setup(self.settings.GPIO_PinNum_Score_Blue, GPIO.IN, pull_up_down=GPIO.PUD_UP) # pyright: ignore[reportPossiblyUnboundVariable]
+        # Setup event on GPIO 16 rising edge
+        GPIO.add_event_detect(self.settings.GPIO_PinNum_Score_Blue, # pyright: ignore[reportPossiblyUnboundVariable]
+                              GPIO.RISING,                          # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.scoreBlueCallBack,
-                              bouncetime=50) # Setup event on GPIO 16 rising edge
+                              bouncetime=50) 
     # End of setupButtons
 
     def effectRedCallBack(self, channel):
@@ -146,7 +156,8 @@ def main() -> int:
     buttons.blueEffect_PlaySound = sounds.playRandomBlueSong
 
     message = input("Press enter to quit\n\n") # Run until someone presses enter
-    GPIO.cleanup() # Clean up
+    # Clean up
+    GPIO.cleanup() # pyright: ignore[reportPossiblyUnboundVariable]
     print(f"blue: {buttons.scoreBlue}, red: {buttons.scoreRed}\n")
 
     # Return 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)

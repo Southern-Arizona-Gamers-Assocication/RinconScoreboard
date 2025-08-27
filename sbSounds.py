@@ -5,7 +5,6 @@
 # This file loads the sounds and plays them back.
 # 
 
-from functools import partial, partialmethod
 import sys   # System-specific parameters and functions
 import os    # Miscellaneous operating system interfaces
 import subprocess
@@ -13,11 +12,12 @@ import time
 import random
 
 try:
-    import pygame # for audio files
+    # for audio files 
+    import pygame # pyright: ignore[reportMissingImports]
 except ModuleNotFoundError:
-    print("Module Pygames Not Found. Don't use class sbSound.")
+    print("Module pygame Not Found. Don't use class sbSound.")
 
-from configSetttingsBase import ConfigSettingsBase
+from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool
 
 # SoundConfig description: Holds all the sound settings
 # Instantiation Syntax: SoundConfig()
@@ -27,13 +27,13 @@ class SoundSettingsConfig(ConfigSettingsBase):
         # Execute the a base classes __init__() 
         super().__init__("Sound Settings")
 
-    Directory_Red_Sounds = ConfigSettingsBase.ConfigSetting("red_sounds")
-    Directory_Blue_Sounds = ConfigSettingsBase.ConfigSetting("blue_sounds")
-    Volume_Percent_Normal = ConfigSettingsBase.ConfigSetting("100%")
-    SoundTest_Volume = ConfigSettingsBase.ConfigSetting("30%")
-    SoundTest_Wait_for_Sound_End = ConfigSettingsBase.ConfigSettingBool("Yes")
-    SoundTest_Print_Sound_Duration  = ConfigSettingsBase.ConfigSettingBool("Yes")
-    SoundTest_Sound_Duration_Timeout  = ConfigSettingsBase.ConfigSetting(5.0)
+    Directory_Red_Sounds = ConfigSetting("red_sounds")
+    Directory_Blue_Sounds = ConfigSetting("blue_sounds")
+    Volume_Percent_Normal = ConfigSetting("50%")
+    SoundTest_Volume = ConfigSetting("20%")
+    SoundTest_Wait_for_Sound_End = ConfigSettingBool("Yes")
+    SoundTest_Print_Sound_Duration  = ConfigSettingBool("Yes")
+    SoundTest_Sound_Duration_Timeout  = ConfigSetting(5.0)
     #test1 = ConfigSettingsBase.ConfigSetting("AbCdEf")
 
 # End of class SoundSettingsConfig
@@ -44,7 +44,7 @@ class sbSounds:
     # Customize the current instance to a specific initial state.
     def __init__(self) -> None:
         # Init Sound Ssettings
-        self._Sounds: dict[str, dict[str, pygame.mixer.Sound]] = {}
+        self._Sounds: dict[str, dict[str, pygame.mixer.Sound]] = {} # pyright: ignore[reportPossiblyUnboundVariable]
         self._totalNumOfSounds = 0
 
     settings = SoundSettingsConfig()
@@ -54,7 +54,7 @@ class sbSounds:
         self._Sounds[directoryName] = {}
         for fileName in os.listdir(directoryName):
             name = f"{directoryName}/{fileName}"
-            self._Sounds[directoryName][name] = pygame.mixer.Sound(name)
+            self._Sounds[directoryName][name] = pygame.mixer.Sound(name) # pyright: ignore[reportPossiblyUnboundVariable]
             self._totalNumOfSounds += 1
     
     def getSoundsByGroup(self, groupName: str) -> dict:
@@ -97,7 +97,7 @@ class sbSounds:
     
     def playRandomSongFromGroup(self,groupName: str):
         """Plays a radom song from a group if no other sound is playing."""
-        if  (not pygame.mixer.get_busy()):
+        if  (not pygame.mixer.get_busy()): # pyright: ignore[reportPossiblyUnboundVariable]
             sndName = random.choice(list(self._Sounds[groupName].keys()))
             self._Sounds[groupName][sndName].play()
             print(f"Playing sound: {sndName}")
@@ -110,6 +110,7 @@ class sbSounds:
 
     def setVolume(self, volume: str) -> None:
         cmd = subprocess.run(["/usr/bin/amixer", "set", "Master", volume])
+        time.sleep(0.2)
 
     def testSounds(self) ->None:
         """Tests the sounds and optionally print the times"""
@@ -119,7 +120,7 @@ class sbSounds:
         for (name,sound) in self.getAllsounds().items():
             print(f"Playing sound: {name} ", end="")
             sound.play()
-            while(pygame.mixer.get_busy()):
+            while(pygame.mixer.get_busy()): # pyright: ignore[reportPossiblyUnboundVariable]
                 time.sleep(0.1)
             print(">> Duration: ")
         self.setVolume(self.settings.Volume_Percent_Normal)
@@ -130,7 +131,7 @@ class sbSounds:
         """Setup and initialize the sound system."""
         if self.settings.allSectionSsettingsAreUpdated() or (__name__ == '__main__'):
             #initialize pygame library
-            pygame.init()
+            pygame.init() # pyright: ignore[reportPossiblyUnboundVariable]
 
             # Load Red sounds group directory
             print("Loading the red sounds.")

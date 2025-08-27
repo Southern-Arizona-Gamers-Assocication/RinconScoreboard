@@ -9,7 +9,6 @@ import os    # Miscellaneous operating system interfaces
 from configparser import ConfigParser, ExtendedInterpolation
 
 from configSetttingsBase import ConfigSettingsBase
-import configSetttingsBase
 
 # Define Functions and Classes Here
 
@@ -27,7 +26,8 @@ class configFileParser:
         self.__configFileName__ = configFileName
         self.configSections: dict[str, ConfigSettingsBase] = {}
         self.config = ConfigParser(interpolation=ExtendedInterpolation())
-        self.config.optionxform = str
+        # ignore type
+        self.config.optionxform = str # type: ignore
     
     def registerSettingsSection(self, sectionSettings: ConfigSettingsBase):
         """
@@ -101,7 +101,7 @@ def main() -> int:
     # Setup Done now run tests
     
     if args.FileName is None:
-        fName = "sbSoundsConfig"
+        fName = "ScoreBoardConfig"
     else:
         fName = args.FileName
     conf = configFileParser(fName)
