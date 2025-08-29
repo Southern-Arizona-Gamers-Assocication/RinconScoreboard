@@ -9,7 +9,7 @@ import sys   # System-specific parameters and functions
 
 try:
     # Import Raspberry Pi GPIO library
-    import RPi.GPIO as GPIO # pyright: ignore[reportMissingImports]
+    import RPi.GPIO as GPIO # pyright: ignore[reportMissingModuleSource]
 except ModuleNotFoundError:
     print("Module RPi.GPIO Not Found. Don't use class sbButtonsInterface.")
 
@@ -18,10 +18,8 @@ from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSetting
 # SoundConfig description: Holds all the sound settings
 # Instantiation Syntax: SoundConfig()
 class ButtonsSettingsConfig(ConfigSettingsBase):
-    # Customize the current instance to a specific initial state.
-    def __init__(self) -> None:
-        # Execute the a base classes __init__() 
-        super().__init__("Button Settings")
+    """"""
+    __configSection_Name__ = "Button Settings"
 
     Scores_File = ConfigSetting("scores.txt")
     GPIO_PinNum_Effect_Red = ConfigSetting(18)
@@ -29,8 +27,7 @@ class ButtonsSettingsConfig(ConfigSettingsBase):
     GPIO_PinNum_Score_Red = ConfigSetting(19)
     GPIO_PinNum_Score_Blue = ConfigSetting(16)
     See_GPIO_Warnings = ConfigSettingBool("No")
-
-# End of class SoundSettingsConfig
+# End of class ButtonsSettingsConfig
 
 # Define Functions and Classes Here
 class sbButtonsInterface:
@@ -95,7 +92,7 @@ class sbButtonsInterface:
                               GPIO.RISING,                          # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.scoreBlueCallBack,
                               bouncetime=50) 
-    # End of setupButtons
+    # End of setupButtons() Method
 
     def effectRedCallBack(self, channel):
         """"""

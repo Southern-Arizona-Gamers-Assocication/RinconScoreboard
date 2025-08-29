@@ -13,7 +13,8 @@ class SpawnProcess(multiprocessing.Process):
     """Class description:
        Instantiation Syntax: className() See __init__() for syntax details.
     """
-    def __init__(self, pName = None):
+    exitAll = None
+    def __init__(self, pName = None) -> None:
         """Customize the current instance to a specific initial state."""
         super().__init__(name = pName)
     

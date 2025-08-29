@@ -26,9 +26,12 @@ class configFileParser:
         self.__configFileName__ = configFileName
         self.configSections: dict[str, ConfigSettingsBase] = {}
         self.config = ConfigParser(interpolation=ExtendedInterpolation())
-        # ignore type
-        self.config.optionxform = str # type: ignore
-    
+        self.config.optionxform = str # pyright: ignore[reportAttributeAccessIssue]
+
+    def setDefaultSectionName(self, defaultSecName: str) -> None:
+        """"""
+        self.config.default_section = defaultSecName
+
     def registerSettingsSection(self, sectionSettings: ConfigSettingsBase):
         """
         registerSettingsSection Registers a setting section and loads the settings into the ConfigParcser
@@ -38,18 +41,22 @@ class configFileParser:
         """
         if not isinstance(sectionSettings, ConfigSettingsBase):
             raise TypeError(f"Error with registeringSettingsSection argument of type {type(sectionSettings)}. The type should be 'class ConfigSettingsBase'")
-        sectionName = sectionSettings.sectionName()
+        sectionName = sectionSettings.getSectionName()
         self.configSections[sectionName] = sectionSettings
         self.loadSectonIntoConfig(sectionName)
 
     def loadSectonIntoConfig(self, sectionName: str):
         """"""
-        self.config[sectionName] = self.configSections[sectionName].getAllSectionSettings()
+        self.config[sectionName] = self.configSections[sectionName].getSectionSettings()
 
     def loadAllSectonsIntoConfig(self):
         """"""
         for sectionName in self.configSections.keys():
-            self.config[sectionName] = self.configSections[sectionName].getAllSectionSettings()
+            self.config[sectionName] = self.configSections[sectionName].getSectionSettings()
+
+    def loadAllSettingsFromDictionary(self, dictAllSettings: dict[str, dict[str, str]]):
+        """"""
+        self.config.read_dict(dictAllSettings)
 
     def readConfigFile(self):
         """"""
@@ -61,7 +68,7 @@ class configFileParser:
         """"""
         for sectionName in self.config.sections():
             if sectionName in self.configSections:
-                self.configSections[sectionName].updateAllSectionSettings(dict(self.config.items(sectionName)))
+                self.configSections[sectionName].updateSectionSettings(dict(self.config.items(sectionName)))
             else:
                 raise KeyError(f"ERROR: ConfigFile '{self.__configFileName__}' section name '{sectionName}' is not " + 
                                "a know section name. Is the section name spelled correctly?")
@@ -94,12 +101,6 @@ def main() -> int:
     pCmdLine.add_argument("-n", "--noReadConfig", action="store_true", help="Write to file is true.")
     args = pCmdLine.parse_args()
 
-    # Import Local modules here.
-    from sbSounds import SoundSettingsConfig
-    from sbButtonsInterface import ButtonsSettingsConfig
-    print("Import done for local modules.")
-    # Setup Done now run tests
-    
     if args.FileName is None:
         fName = "ScoreBoardConfig"
     else:
@@ -107,22 +108,31 @@ def main() -> int:
     conf = configFileParser(fName)
     print("Done assigning configFileParser.")
 
-    soundSettings = SoundSettingsConfig()
+    # Import Local modules here.
+    from sbSounds import SoundSettingsConfig
+    from sbButtonsInterface import ButtonsSettingsConfig
+    print("Import done for local modules.")
+    # Setup Done now run tests
+    
+    soundSettings = SoundSettingsConfig(False)
+    buttonSettings = ButtonsSettingsConfig(False)
+    for secSettings in [soundSettings, buttonSettings]:
+        print(f"Done assigning config sections: {secSettings.getSectionName()}, with the default Section Name: {secSettings.getDefaultSectionName()}")
+
+    conf.setDefaultSectionName(soundSettings.getDefaultSectionName())
+    conf.loadAllSettingsFromDictionary(buttonSettings.getAllSettings())
+    print("Done loading setting into configParser.")
+
     soundSettings.printAllSettings()
-    buttonSettings = ButtonsSettingsConfig()
-    print("Done assigning config sections.")
-
-    conf.registerSettingsSection(soundSettings)
-    print("Done registering config sections.")
-
     conf.printConfig()
 
-    print(f"Don't read confing file: {args.noReadConfig}")
-    if not args.noReadConfig:
+    if args.noReadConfig:
+        print(f"Argument --noReadConfig is set so not reading the configuration file.")
+    else:
         conf.readConfigFile()
 
-    conf.printConfig()
-    soundSettings.printAllSettings()
+    #conf.printConfig()
+    #soundSettings.printAllSettings()
 
     if args.writeConfig:
         conf.writeConfigFile()

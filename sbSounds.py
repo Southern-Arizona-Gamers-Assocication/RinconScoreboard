@@ -17,25 +17,22 @@ try:
 except ModuleNotFoundError:
     print("Module pygame Not Found. Don't use class sbSound.")
 
-from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool
+import configSetttingsBase as cb
 
 # SoundConfig description: Holds all the sound settings
 # Instantiation Syntax: SoundConfig()
-class SoundSettingsConfig(ConfigSettingsBase):
-    # Customize the current instance to a specific initial state.
-    def __init__(self) -> None:
-        # Execute the a base classes __init__() 
-        super().__init__("Sound Settings")
+class SoundSettingsConfig(cb.ConfigSettingsBase):
+    """"""
+    __configSection_Name__ = "Sound Settings"
 
-    Directory_Red_Sounds = ConfigSetting("red_sounds")
-    Directory_Blue_Sounds = ConfigSetting("blue_sounds")
-    Volume_Percent_Normal = ConfigSetting("50%")
-    SoundTest_Volume = ConfigSetting("20%")
-    SoundTest_Wait_for_Sound_End = ConfigSettingBool("Yes")
-    SoundTest_Print_Sound_Duration  = ConfigSettingBool("Yes")
-    SoundTest_Sound_Duration_Timeout  = ConfigSetting(5.0)
+    Directory_Red_Sounds = cb.ConfigSetting("red_sounds")
+    Directory_Blue_Sounds = cb.ConfigSetting("blue_sounds")
+    Volume_Percent_Normal = cb.ConfigSetting("50%")
+    SoundTest_Volume = cb.ConfigSetting("20%")
+    SoundTest_Wait_for_Sound_End = cb.ConfigSettingBool("Yes")
+    SoundTest_Print_Sound_Duration  = cb.ConfigSettingBool("Yes")
+    SoundTest_Sound_Duration_Timeout  = cb.ConfigSetting(5.0)
     #test1 = ConfigSettingsBase.ConfigSetting("AbCdEf")
-
 # End of class SoundSettingsConfig
 
 # sbSounds: Loads and Plays the sounds for the Scoreboard.
@@ -129,7 +126,7 @@ class sbSounds:
 
     def setupSounds(self) -> None:
         """Setup and initialize the sound system."""
-        if self.settings.allSectionSsettingsAreUpdated() or (__name__ == '__main__'):
+        if self.settings.areSectionSsettingsUpdated() or (__name__ == '__main__'):
             #initialize pygame library
             pygame.init() # pyright: ignore[reportPossiblyUnboundVariable]
 

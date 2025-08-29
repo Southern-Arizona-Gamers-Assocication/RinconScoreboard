@@ -8,28 +8,71 @@
 #import sys   # System-specific parameters and functions
 #import os    # Miscellaneous operating system interfaces  
 
+from numbers import Number
+import numbers
+
+ENABLE_thisIsExecuting_TO_PRINT = False
+if ENABLE_thisIsExecuting_TO_PRINT: 
+    #from functools import partial
+    from inspect import stack
+    def thisIsExecuting() -> None:
+        """"""
+        s = [""]
+        for fr in stack():
+            s.append(f"{fr.function}")
+        print(f"Traceback: {"->".join(s)}")
+        #print(f"Traceback: {classInstance.__qualname__}.{callerName}: {txt}")
+else:
+    def thisIsExecuting() -> None:
+        """Set 'ENABLE_methodIsExecuting_TO_PRINT = True' to enable this function before this function is imported."""
+        pass
+
+
 class ConfigSetting:
     """"""
+
+    def __set_name__(self, owner, name: str) -> None:
+        """"""
+        if type(name) is str:
+            if len(name) > 0:
+                # The Stores the name of the Section in the config file.  
+                self.__name__ = name
+            else:
+                raise ValueError("Argument 'name' is to Short: 'name' needs to be a string of length greather than 0.")
+        elif name == None:
+            raise ValueError("Argument 'name' equals None: 'name' needs to be a string of length greather than 0.")
+        else:
+            raise TypeError(f"Argument type(name) = {type(name)}: 'name' needs to be a string of length greather than 0.")
+        o: ConfigSettingsBase = owner
+        try:
+            if len(o.__configSection_Name__) > 0:
+                self.__sectionName__: str = o.__configSection_Name__
+            else:
+                self.__sectionName__: str = o._configDefaultSection_Name
+            #print(f"Registering Setting: '{o.__qualname__}.{name}' in section '{self.__sectionName__}'")
+            if self.__sectionName__ not in o._allConfigSettings:
+                o._allConfigSettings[self.__sectionName__] = {}
+            o._allConfigSettings[self.__sectionName__][name] = self
+        except AttributeError as err:
+            raise TypeError("\n".join(["This class expects to be assigned as an attribute inside the class ConfigSettingsBase or its subclasses.", 
+                                      f"This instance was assigned in class, {type(o)}, to attribute: '{name}'"])) from err
+
     def __init__(self, defaultValue) -> None:
+        """"""
+        thisIsExecuting()
+        #print(f"Initialising a configuration setting to '{defaultValue}'")
+        if isinstance(defaultValue, bool):
+            raise TypeError("Use ConfigSettingBool for a boolean type")
         self.__value__ = defaultValue
         self.valType = type(defaultValue)
-        #print(f"default value: '{defaultValue}'; '{self.__value__}'")
 
-    def __set_name__(self, owner, name) -> None:
-        #print(f"Name is set for '{owner}.{name}'")
-        #if hasattr(owner, name):
-        #    raise AttributeError(f"Name '{name}' is already used in the {owner.__class__.__name__} class.")
-        self.__name__ = name
-        self.__owner__ = owner
-        owner.__configSettings__[name] = self
-    
     def __get__(self, instance, owningClass=None):
         """"""
         return self.__value__
     
     def __set__(self, instance, value):
         """"""
-        raise AttributeError(f"{self.__name__} is a READ ONLY configuration setting. Use .setAllSectionSettings() to configure from config file.")
+        raise AttributeError(f"{self.__name__} is a READ ONLY attribute. Use class (or a subclass of) ConfigSettingsBase's update* Methods.")
 
     def __str__(self) -> str:
         """
@@ -49,7 +92,7 @@ class ConfigSetting:
         try:
             if len(valueString) < 1:
                 raise ValueError("Config Error: '{0:s}:{1:s}' has no value in the config file."
-                        .format(self.__owner__.sectionName(),self.__name__))
+                        .format(self.__sectionName__,self.__name__))
             self.__value__ = self.convertStr2ValueType(valueString)
         except ValueError as valErr:
             msg = f"Config Error: while updating config setting '{self.__name__}' to '{valueString}'.\n" + \
@@ -68,14 +111,23 @@ class ConfigSetting:
 class ConfigSettingBool(ConfigSetting):
     """"""
     def __init__(self, defaultValue) -> None:
-        #print(f"Setting default value for: '{defaultValue}'")
+        """"""
+        #print(f"Initialising a Boolean configuration setting to '{defaultValue}'")
         self.valType = bool
         if isinstance(defaultValue, bool):
             self.__value__ = defaultValue
+        elif isinstance(defaultValue, numbers.Number):
+            if defaultValue == 0:
+                self.__value__ = False
+            else:
+                self.__value__ = True
         elif isinstance(defaultValue, str):
             self.__value__ = self.convertStr2ValueType(defaultValue)
         else:
             self.__value__ = self.convertStr2ValueType(str(defaultValue))
+
+    def __bool__(self) -> bool:
+        return self.__value__
 
     def convertStr2ValueType(self, valueString: str) -> bool:
         """
@@ -91,7 +143,7 @@ class ConfigSettingBool(ConfigSetting):
         """
         boolText = {"true": True, "1": True, "on": True, "yes": True, 
                     "false": False, "0": False, "off": False, "no": False}
-        s = valueString.lower()
+        s = valueString.lower().strip()
         if s in boolText:
             return boolText[s]
         else:
@@ -105,9 +157,21 @@ class ConfigSettingsBase:
     ConfigSettingsBase is the basic settings configuration class.  This class should be used 
     as the base class for application specific classes to inherit the common functionality 
     functions.
+    If subclasses override __init__() running 'super().__init__()' to execute this class's __init__().
+
+    To make a configuration section subclassing this class and override '__configSection_Name__'
+    by setting it equal to the desired section name.
     """
+    _configDefaultSection_Name = "Common Settings"
+    __configSection_Name__ = ""
+    __configSettings__: dict[str, ConfigSetting] = {}
+    _allConfigSettings: dict[str, dict[str, ConfigSetting]] = {}
+
+    Debuging = ConfigSettingBool("Yes") # declarese if debuging is happening.
+    Verbosity_Level = ConfigSetting(2)
+
     # Customize the current instance to a specific initial state.
-    def __init__(self, configFileSectionName: str = "", updateFromConfigFile: bool = False) -> None:
+    def __init__(self, updateFromConfigFile: bool = True) -> None:
         """
         __init__ initializes the current instance of ConfigSettingsBase. 
         
@@ -117,62 +181,71 @@ class ConfigSettingsBase:
                 updated from the config file as read by the configparser.ConfigParser
         :type updateFromConfigFile: bool
         """
-        # Execute the a base classes __init__() 
-        #super().__init__(configFileSectionName)
-        #print(f"Initializing ConfigSettingsBase with a Section Name = '{configFileSectionName}'")
-        if type(configFileSectionName) is str:
-            if len(configFileSectionName) > 0:
-                # The Stores the name of the Section in the config file.  
-                self.__configSection_Name__ = configFileSectionName
-            else:
-                raise ValueError("Argument is to Short: configFileSectionName needs to be a string with a length greather than 0")
-        elif configFileSectionName == None:
-            raise TypeError("Argument Needed: configFileSectionName needs to be a string with a length greather than 0")
+        #print(f"In ConfigSettingsBase's __init__(); updateFromConfigFile = {updateFromConfigFile}")
+        if isinstance(updateFromConfigFile, bool) and not updateFromConfigFile:
+            self.__allSectionSsettingsUpdated__ = True 
         else:
-            raise TypeError("Argument Wrong Type: configFileSectionName needs to be a string with a length greather than 0")
-        #self.printAllSettings()
-        if updateFromConfigFile:
-            self.__allSectionSsettingsUpdated__ = False 
-        else:
-            self.__allSectionSsettingsUpdated__ = True
+            self.__allSectionSsettingsUpdated__ = False
+    # End of __init__() Method
 
-    __configSettings__: dict[str, ConfigSetting] = {}
-
-    def sectionName(self) -> str: 
+    def getSectionName(self) -> str: 
         """Returns the name of the section where these seetings are stored. {self:'instanceName'}.sectionName will invoke this getter."""
         return self.__configSection_Name__
+    def getDefaultSectionName(self) -> str: 
+        """Returns the name of the default section where common settings are stored. {self:'instanceName'}.sectionName will invoke this getter."""
+        return self._configDefaultSection_Name
 
-    def getAllSectionSettings(self) -> dict[str, str]:
-        """Returns the configuration settings as dictionary of strings. {self:'instanceName'}.sectionAllSettings will invoke this getter."""
-        settings = {}
-        for name, value in self.__configSettings__.items():
-            settings[name] = str(value)
+    def getAllSettings(self) -> dict[str, dict[str, str]]:
+        """Returns the ALL the configuration settings as a dictionary of strings. {self:'instanceName'}.sectionAllSettings will invoke this getter."""
+        settings: dict[str, dict[str, str]] = {}
+        for sectName in self._allConfigSettings:
+            if sectName not in settings:
+                settings[sectName] = {}
+            for name, cSetting in self._allConfigSettings[sectName].items():
+                settings[sectName][name] = str(cSetting)
         return settings
 
-    def updateAllSectionSettings(self, settings: dict[str, str]):
+    def updateSectionSettings(self, settings: dict[str, str]):
         """Sets Config Settings from a ConfigParser instance. {self:'instanceName'}.sectionAllSettings(settings) will invoke this getter."""
         for name, cSetting in self.__configSettings__.items():
             if name in settings:
                 cSetting.updateFromSettingsDict(settings)
             else:
                 print("Config Warning: '{0:s};{1:s}' is NOT Found in config file./n/t Using default value."
-                      .format(self.sectionName(), name))
+                      .format(self.getSectionName(), name))
         for name in settings.keys():
             if name not in self.__configSettings__:
                 print("Config Warning: '{0:s}; {1:s}' is not used./n/t Is it spelled correctly or deprecated?"
-                      .format(self.sectionName(),name))
+                      .format(self.getSectionName(),name))
         self.__allSectionSsettingsUpdated__ = True
 
-    def allSectionSsettingsAreUpdated(self) -> bool:
+    def getSectionSettings(self) -> dict[str, str]:
+        """Returns the configuration settings as dictionary of strings. {self:'instanceName'}.sectionAllSettings will invoke this getter."""
+        settings = {}
+        for name, cSetting in self.__configSettings__.items():
+            settings[name] = str(cSetting)
+        return settings
+
+    def areSectionSsettingsUpdated(self) -> bool:
         #return self.__settingsLoadedFromConfigFile__
         return self.__allSectionSsettingsUpdated__
 
-    def printAllSettings(self):
+    def printSectionSettings(self):
         """"""
-        print(f"All settings for section: '{self.sectionName()}'")
-        for sName in self.__configSettings__.keys():
-            print(f"  Name: '{sName}' Type: {self.__configSettings__[sName].valType} Value: '{self.__configSettings__[sName]}'")
+        print(f"All settings for section: '{self.getSectionName()}'")
+        for name, cSetting in self.__configSettings__.items():
+            print(f"   Name: '{name}' Type: {cSetting.valType} Value: '{cSetting}'")
 
+    def printAllSettings(self, stringOnly: bool = False) -> str:
+        """"""
+        s = [f"All settings for all sections:"]
+        for sectName in self._allConfigSettings:
+            s.append(f"Section: '{sectName}'")
+            for name, cSetting in self._allConfigSettings[sectName].items():
+                s.append(f"  Name: '{name}' Type: {cSetting.valType} Value: '{cSetting}'")
+        if not stringOnly:
+            print("\n".join(s))
+        return "\n".join(s)
 # End of class ConfigSettingsBase
 
 # -----------------------------------------------------------------------------
