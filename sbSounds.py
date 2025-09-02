@@ -125,7 +125,7 @@ class sbSounds:
 
     def setupSounds(self) -> None:
         """Setup and initialize the sound system."""
-        if self.settings.areSectionSsettingsUpdated() or (__name__ == '__main__'):
+        if self.settings.areSectionSsettingsUpdated() or (__name__ != 'sbSounds.py'):
             #initialize pygame library
             pygame.init() # pyright: ignore[reportPossiblyUnboundVariable]
 
