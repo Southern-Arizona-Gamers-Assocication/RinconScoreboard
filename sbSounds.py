@@ -47,6 +47,7 @@ class sbSounds:
         print(f"Executing: {self.__class__.__qualname__}.__init__()")
         self._Sounds: dict[str, dict[str, pygame.mixer.Sound]] = {} # pyright: ignore[reportPossiblyUnboundVariable]
         self._totalNumOfSounds = 0
+        print(f"Done Executing: {self.__class__.__qualname__}.__init__()")
 
     settings = SoundSettingsConfig()
 
@@ -157,7 +158,8 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
         """"""
         print(f"Executing: {self.__class__.__qualname__}.__init__()")
         super(sbSounds).__init__()
-        super(SpawnProcess).__init__()
+        super(SpawnProcess).__init__("Sounds")
+        print(f"Done Executing: {self.__class__.__qualname__}.__init__()")
 # End of class sbSounds
 
 
