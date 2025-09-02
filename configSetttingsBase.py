@@ -37,7 +37,7 @@ class ConfigSetting:
         if isinstance(name, str):
             if len(name) > 0:
                 # The Stores the name of the Section in the config file.  
-                self.__name__ = name
+                self.__nameMe__ = name
             else:
                 raise ValueError("Argument 'name' is to Short: 'name' needs to be a string of length greather than 0.")
         elif name == None:
@@ -57,7 +57,9 @@ class ConfigSetting:
         except AttributeError as err:
             raise TypeError("\n".join(["This class expects to be assigned as an attribute inside the class ConfigSettingsBase or its subclasses.", 
                                       f"This instance was assigned in class, {type(o)}, to attribute: '{name}'"])) from err
-
+    def get_name(self) -> str:
+        """"""
+        return self.__nameMe__
     def __init__(self, defaultValue) -> None:
         """"""
         thisIsExecuting()
@@ -73,7 +75,7 @@ class ConfigSetting:
     
     def __set__(self, instance, value):
         """"""
-        raise AttributeError(f"{self.__name__} is a READ ONLY attribute. Use class (or a subclass of) ConfigSettingsBase's update* Methods.")
+        raise AttributeError(f"{self.__nameMe__} is a READ ONLY attribute. Use class (or a subclass of) ConfigSettingsBase's update* Methods.")
 
     def __str__(self) -> str:
         """
@@ -89,14 +91,14 @@ class ConfigSetting:
     
     def updateFromSettingsDict(self, settings: dict[str, str]):
         """"""
-        valueString = settings[self.__name__]
+        valueString = settings[self.__nameMe__]
         try:
             if len(valueString) < 1:
                 raise ValueError("Config Error: '{0:s}:{1:s}' has no value in the config file."
-                        .format(self.__sectionName__,self.__name__))
+                        .format(self.__sectionName__,self.__nameMe__))
             self.__value__ = self.convertStr2ValueType(valueString)
         except ValueError as valErr:
-            msg = f"Config Error: while updating config setting '{self.__name__}' to '{valueString}'.\n" + \
+            msg = f"Config Error: while updating config setting '{self.__nameMe__}' to '{valueString}'.\n" + \
                     f"The conversion from 'str' to '{self.valType}' failed."
             if self.__value__ is None:
                 valErr.add_note(msg + "Default value not present therefore cannot procede.")
