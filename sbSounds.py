@@ -11,6 +11,8 @@ import subprocess
 import time
 import random
 
+from .processSpawning import SpawnProcess
+
 try:
     # for audio files 
     import pygame # pyright: ignore[reportMissingImports]
@@ -34,12 +36,16 @@ class SoundSettingsConfig(cb.ConfigSettingsBase):
     SoundTest_Sound_Duration_Timeout  = cb.ConfigSetting(5.0)
 # End of class SoundSettingsConfig
 
-# sbSounds: Loads and Plays the sounds for the Scoreboard.
-# Instantiation Syntax: SBsounds()
+# sbSounds() Loads and Plays the sounds for the Scoreboard.
 class sbSounds:
-    # Customize the current instance to a specific initial state.
+    """
+    sbSounds() Loads and Plays the sounds for the Scoreboard.
+    Instantiation Syntax: SBsounds()
+    """
     def __init__(self) -> None:
-        # Init Sound Ssettings
+        """Init Sound Ssettings"""
+        print(f"{self.__class__.name}.init: super().name = {super().name}")
+        print(f"settings.mro = {self.settings.__class__.mro()}")
         self._Sounds: dict[str, dict[str, pygame.mixer.Sound]] = {} # pyright: ignore[reportPossiblyUnboundVariable]
         self._totalNumOfSounds = 0
 
@@ -125,7 +131,7 @@ class sbSounds:
 
     def setupSounds(self) -> None:
         """Setup and initialize the sound system."""
-        if self.settings.areSectionSsettingsUpdated() or (__name__ != 'sbSounds.py'):
+        if self.settings.areSectionSsettingsUpdated() or (__name__ != 'scoreboard.py'):
             #initialize pygame library
             pygame.init() # pyright: ignore[reportPossiblyUnboundVariable]
 
@@ -142,13 +148,29 @@ class sbSounds:
             raise RuntimeError("Configuration file has not been loaded")
 # End of class sbSounds
 
+# sbSounds() Loads and Plays the sounds for the Scoreboard.
+class sbSoundsMpSpawning(sbSounds, SpawnProcess):
+    """
+    sbSounds() Loads and Plays the sounds for the Scoreboard.
+    Instantiation Syntax: SBsounds()
+    """
+    def __init__(self) -> None:
+        """"""
+        print(f"{self.__class__.name}.init: super().name = {super().name}")
+        super().__init__()
+        print(f"{self.__class__.name}.init: super(sbSounds).name = {super(sbSounds).name}")
+        super(sbSounds).__init__()
+# End of class sbSounds
+
+
 # -----------------------------------------------------------------------------
 
 # Define the "Main Function" which is called automatically if this is the top level Module by the last two lines 
 def main() -> int:
     print("Hello World!")
 
-    sounds = sbSounds()
+    sounds = sbSoundsMpSpawning()
+    #sounds = sbSounds()
     sounds.setupSounds()
     sounds.playRandomRedSong()
     sounds.playRandomBlueSong()

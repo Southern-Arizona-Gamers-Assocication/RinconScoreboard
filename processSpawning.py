@@ -36,6 +36,8 @@ class SpawnProcess(mp.Process):
         super().__init__(name = pName)
         print(f"{pName}'s process names {self._processNamesCount}; event: {self.exitAllProcesses}")
 
+
+
     def run(self) -> None:
         """"""
         print(f'{self.name} process is setting up!', flush=True)
@@ -50,7 +52,8 @@ class SpawnProcess(mp.Process):
             sleep(0.001)
         print(f'{self.name} process is shutting down!', flush=True)
         # TODO: Call shutdown method here
-# End of class className
+# End of class SpawnProcess
+
 # -----------------------------------------------------------------------------
 
 # Define the "Main" Function. If this is not the program module this function can be used for isolated debug testing by executing this file.
