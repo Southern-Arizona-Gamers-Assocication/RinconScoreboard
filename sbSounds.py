@@ -157,8 +157,8 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
     def __init__(self) -> None:
         """"""
         print(f"Executing: {self.__class__.__qualname__}.__init__()")
-        super(sbSounds).__init__()
-        super(SpawnProcess).__init__("Sounds")
+        super().__init__()
+        super(sbSounds).__init__("Sounds")
         print(f"Done Executing: {self.__class__.__qualname__}.__init__()")
 # End of class sbSounds
 
