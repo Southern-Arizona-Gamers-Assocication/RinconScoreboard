@@ -21,6 +21,7 @@ class SpawnProcess(mp.Process):
     _processNamesCount = Counter()
     def __init__(self, pName = None) -> None:
         """Customize the current instance to a specific initial state."""
+        print(f"Executing: {self.__class__.__qualname__}.__init__()")
         if len(self._instances) == 0:
             print(f"Setting Creating Event in {pName} process.")
             self.exitAllProcesses = mp.Event()

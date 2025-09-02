@@ -43,7 +43,8 @@ class sbSounds:
     Instantiation Syntax: SBsounds()
     """
     def __init__(self) -> None:
-        """Init Sound Ssettings"""
+        """Init Sound subsystem"""
+        print(f"Executing: {self.__class__.__qualname__}.__init__()")
         self._Sounds: dict[str, dict[str, pygame.mixer.Sound]] = {} # pyright: ignore[reportPossiblyUnboundVariable]
         self._totalNumOfSounds = 0
 
@@ -154,10 +155,12 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
     """
     def __init__(self) -> None:
         """"""
+        print(f"Executing: {self.__class__.__qualname__}.__init__()")
+        print(f"{self.__class__.__qualname__}.init: super().__qualname__ = {super().__getattribute__("__qualname__")}")
         print(f"{self.__class__.__qualname__}.mro = {self.__class__.mro()}")
         super().__init__()
-        print(f"{self.__class__.__qualname__}.init: super(sbSounds).__qualname__ = {super(sbSounds).__class__.__qualname__}")
-        super(sbSounds).__init__()
+        print(f"{self.__class__.__qualname__}.init: super(sbSounds).__qualname__ = {super(sbSounds).__getattribute__("__qualname__")}")
+        super().__init__()
 # End of class sbSounds
 
 
