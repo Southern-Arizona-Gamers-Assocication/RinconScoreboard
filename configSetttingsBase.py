@@ -21,7 +21,7 @@ if ENABLE_thisIsExecuting_TO_PRINT:
         s = [""]
         for fr in stack():
             s.append(f"{fr.function}")
-        print(f"Traceback: {"->".join(s)}")
+        #print(f"Traceback: {'->'.join(s)}")
         #print(f"Traceback: {classInstance.__qualname__}.{callerName}: {txt}")
 else:
     def thisIsExecuting() -> None:
