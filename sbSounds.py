@@ -32,7 +32,6 @@ class SoundSettingsConfig(cb.ConfigSettingsBase):
     SoundTest_Wait_for_Sound_End = cb.ConfigSettingBool("Yes")
     SoundTest_Print_Sound_Duration  = cb.ConfigSettingBool("Yes")
     SoundTest_Sound_Duration_Timeout  = cb.ConfigSetting(5.0)
-    #test1 = ConfigSettingsBase.ConfigSetting("AbCdEf")
 # End of class SoundSettingsConfig
 
 # sbSounds: Loads and Plays the sounds for the Scoreboard.

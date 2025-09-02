@@ -10,6 +10,7 @@
 
 from numbers import Number
 import numbers
+from re import S
 
 ENABLE_thisIsExecuting_TO_PRINT = False
 if ENABLE_thisIsExecuting_TO_PRINT: 
@@ -33,7 +34,7 @@ class ConfigSetting:
 
     def __set_name__(self, owner, name: str) -> None:
         """"""
-        if type(name) is str:
+        if isinstance(name, str):
             if len(name) > 0:
                 # The Stores the name of the Section in the config file.  
                 self.__name__ = name
@@ -84,7 +85,7 @@ class ConfigSetting:
         :return: A string representation of the value. 
         :rtype: str
         """
-        return self.__value__.__str__()
+        return str(self.__value__)
     
     def updateFromSettingsDict(self, settings: dict[str, str]):
         """"""
@@ -164,7 +165,7 @@ class ConfigSettingsBase:
     """
     _configDefaultSection_Name = "Common Settings"
     __configSection_Name__ = ""
-    __configSettings__: dict[str, ConfigSetting] = {}
+    __configSettings__: dict[str, ConfigSetting] = {}   # TODO Deleat this attribute. It is deprecated.
     _allConfigSettings: dict[str, dict[str, ConfigSetting]] = {}
 
     Debuging = ConfigSettingBool("Yes") # declarese if debuging is happening.
