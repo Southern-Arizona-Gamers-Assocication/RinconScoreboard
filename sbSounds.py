@@ -11,7 +11,6 @@ import subprocess
 import time
 import random
 
-from .processSpawning import SpawnProcess
 
 try:
     # for audio files 
@@ -20,6 +19,7 @@ except ModuleNotFoundError:
     print("Module pygame Not Found. Don't use class sbSound.")
 
 import configSetttingsBase as cb
+from processSpawning import SpawnProcess
 
 # SoundConfig description: Holds all the sound settings
 # Instantiation Syntax: SoundConfig()
