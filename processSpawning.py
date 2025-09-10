@@ -2,13 +2,13 @@
 # 
 # Description: 
 # 
-#
+# 
 
 import sys   # System-specific parameters and functions
 #import os    # Miscellaneous operating system interfaces
 from collections import Counter
 from time import sleep
-
+from typing import cast
 import multiprocessing as mp
 
 # Define Functions and Classes Here
@@ -16,43 +16,93 @@ class SpawnProcess(mp.Process):
     """Class description:
        Instantiation Syntax: className() See __init__() for syntax details.
     """
-    _instances: dict[str, mp.Process] = {}
+    _instancesByProcessName: dict[str, mp.Process] = {}
     _processNames: list[str] = []
     _processNamesCount = Counter()
-    def __init__(self, pName = None) -> None:
+    exitAllProcesses = mp.Event()
+    eventType = type(exitAllProcesses)
+
+    def __init__(self, pName: str = "", ) -> None:
         """Customize the current instance to a specific initial state."""
-        print(f"Executing: {self.__class__.__qualname__}.__init__()")
-        if len(self._instances) == 0:
+        # On first run Set Exit All Processes to be the same.  
+        print(f"Start Executing: SpawnProcess.__init__()")
+        if len(self._instancesByProcessName) == 0:
             print(f"Setting Creating Event in {pName} process.")
             self.exitAllProcesses = mp.Event()
-        else:
-            self.exitAllProcesses = self._instances[list(self._instances)[0]].exitAllProcesses # pyright: ignore[reportAttributeAccessIssue]
         if not (isinstance(pName, str) and len(pName) > 0):
             pName = self.__class__.__name__
         self._processNamesCount.update([pName])
         i = self._processNamesCount[pName]
         if i > 1:
             pName = f"{pName}-{i}"
-        self._instances[pName] = self
+        self._instancesByProcessName[pName] = self
+        self._processNames.append(pName)
         super().__init__(name = pName)
         print(f"{pName}'s process names {self._processNamesCount}; event: {self.exitAllProcesses}")
-
-
+        print(f"Done Executing: SpawnProcess.__init__()")
 
     def run(self) -> None:
-        """"""
+        """IF Overriding this Method, the main loop should not be replaced but more complex Setup and Shutdown can be used. This method NEEDS to be called. Ex: supper().run() """
+        try:
+            self.run_setup()
+            while True:
+                self.run_loop()
+                if  self.exitAllProcesses.is_set():
+                    print(f'{self.name} process noticed that the event exitAllProcesses is set! Now exiting.', flush=True)
+                    break
+                sleep(0.1)
+            self.run_shutdown()
+        finally:
+            self.exitAllProcesses.set()
+
+    def run_setup(self) -> None:
+        """Override this to do somethign usefull."""
         print(f'{self.name} process is setting up!', flush=True)
-        # TODO: Call Setup method here
-        while True:
-            print(f'{self.name} process running...', flush=True)
-            sleep(0.75)
-            # TODO: Call Loop Method here
-            if  self.exitAllProcesses.is_set():
-                print(f'{self.name} process noticed that the event exitAllProcesses is set! Now exiting.', flush=True)
-                break
-            sleep(0.001)
+
+    def run_loop(self) -> None:
+        """Override this to do somethign usefull."""
+        print(f'{self.name} process running...', flush=True)
+        sleep(0.75)
+
+    def run_shutdown(self) -> None:
+        """Override this to do somethign usefull."""
         print(f'{self.name} process is shutting down!', flush=True)
-        # TODO: Call shutdown method here
+
+    def createQueue(self):
+        """"""
+        q = mp.Queue(10)
+        if not hasattr(self, "queueType"):
+            self.queueType = type(q)
+            self.queuesList.append(q)
+        else:
+            self.queuesList = [q]
+        return q
+
+    def createEvent(self):
+        """"""
+        return mp.Event()
+    
+    def assignEvent(self, e):
+        """"""
+        if not isinstance(e, self.eventType):
+            raise ValueError("The event parameter must ultimately be assigned by multiprocessing.Event() or None if it is to be assigned later. " + 
+                             "It must be assigned before calling .start(). Calling assignEvent() is the easiest method.")
+        return e
+
+    def assignQueue(self, q):
+        """"""
+        if not isinstance(q, self.queueType):
+            raise ValueError("The queue parameter must ultimately be assigned by multiprocessing.Queue() or None if it is to be assigned later. " + 
+                             "It must be assigned before calling .start(). Calling assignQueue(.createQueue()) is the easiest method.")
+        return q
+
+    def CloseThisProcess(self) -> None:
+        """IF Overriding this Method, THis one NEEDS to be called. Ex 'supper().CloseThisProcess()'."""
+        if hasattr(self, "queuesList"):
+            for q in self.queuesList:
+                q.cancel_join_thread()
+                q.close()
+
 # End of class SpawnProcess
 
 # -----------------------------------------------------------------------------
@@ -62,7 +112,7 @@ def main() -> int:
     """This is the "Main" function which is called automatically by the last two lines if this is the top level Module. 'Import this_file' will not call main().
     """
     print(f"The Global Start Method is '{mp.get_start_method(allow_none=True)}' ")
-    mp.set_start_method('spawn')
+    mp.set_start_method('spawn', True)
     print(f"The Global Start Method is '{mp.get_start_method(allow_none=True)}' ")
     
     exitEvent = mp.Event()

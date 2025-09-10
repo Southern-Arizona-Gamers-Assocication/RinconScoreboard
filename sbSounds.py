@@ -8,7 +8,7 @@
 import sys   # System-specific parameters and functions
 import os    # Miscellaneous operating system interfaces
 import subprocess
-import time
+from time import sleep
 import random
 
 
@@ -25,7 +25,7 @@ from processSpawning import SpawnProcess
 # Instantiation Syntax: SoundConfig()
 class SoundSettingsConfig(cb.ConfigSettingsBase):
     """"""
-    __configSection_Name__ = "Sound Settings"
+    _configSection_Name = "Sound Settings"
 
     Directory_Red_Sounds = cb.ConfigSetting("red_sounds")
     Directory_Blue_Sounds = cb.ConfigSetting("blue_sounds")
@@ -44,10 +44,10 @@ class sbSounds:
     """
     def __init__(self) -> None:
         """Init Sound subsystem"""
-        print(f"Executing: {self.__class__.__qualname__}.__init__()")
+        print(f"Start Executing: sbSounds.__init__() For class: {self.__class__.__qualname__}")
         self._Sounds: dict[str, dict[str, pygame.mixer.Sound]] = {} # pyright: ignore[reportPossiblyUnboundVariable]
         self._totalNumOfSounds = 0
-        print(f"Done Executing: {self.__class__.__qualname__}.__init__()")
+        print(f"Done Executing: sbSounds.__init__()")
 
     settings = SoundSettingsConfig()
 
@@ -112,7 +112,7 @@ class sbSounds:
 
     def setVolume(self, volume: str) -> None:
         cmd = subprocess.run(["/usr/bin/amixer", "set", "Master", volume])
-        time.sleep(0.2)
+        sleep(0.2)
 
     def testSounds(self) ->None:
         """Tests the sounds and optionally print the times"""
@@ -123,7 +123,7 @@ class sbSounds:
             print(f"Playing sound: {name} ", end="")
             sound.play()
             while(pygame.mixer.get_busy()): # pyright: ignore[reportPossiblyUnboundVariable]
-                time.sleep(0.1)
+                sleep(0.1)
             print(">> Duration: ")
         self.setVolume(self.settings.Volume_Percent_Normal)
         print("Finished the initialization of the red and blue sounds.")
@@ -148,19 +148,51 @@ class sbSounds:
             raise RuntimeError("Configuration file has not been loaded")
 # End of class sbSounds
 
-# sbSounds() Loads and Plays the sounds for the Scoreboard.
+# sbSoundsMpSpawning() Loads and Plays the sounds for the Scoreboard.
 class sbSoundsMpSpawning(sbSounds, SpawnProcess):
     """
-    sbSounds() Loads and Plays the sounds for the Scoreboard.
-    Instantiation Syntax: SBsounds()
+    sbSoundsMpSpawning() Loads and Plays the sounds for the Scoreboard.
+    Instantiation Syntax: sbSoundsMpSpawning()
     """
-    def __init__(self) -> None:
+
+    def __init__(self, redEvent = None, blueEvent = None) -> None:
         """"""
-        print(f"Executing: {self.__class__.__qualname__}.__init__()")
+        print(f"Executing: sbSoundsMpSpawning.__init__()")
         sbSounds.__init__(self)
-        SpawnProcess.__init__(self,"Sounds")
-        print(f"Done Executing: {self.__class__.__qualname__}.__init__()")
-# End of class sbSounds
+        SpawnProcess.__init__(self, "Sounds")
+        print(f"Done Executing: sbSoundsMpSpawning.__init__()")
+        # Setup Blue Effeet event
+        if (redEvent is None) and (blueEvent is None):
+            pass
+        elif (redEvent is not None) and (blueEvent is not None):
+            self.assignEventsSoundEffects(redEvent,blueEvent)
+        else:
+            raise AttributeError("Both events have need to be assigned or both need to be not assigned.")
+
+    def run_setup(self) -> None:
+        """"""
+        print(f'{self.name} process is setting up!', flush=True)
+        if self.eventRedEffect == self.exitAllProcesses:
+            raise ValueError("Assignment of eventRedEffect has not been assigned. It is still the default value.")
+        if self.eventBlueEffect == self.exitAllProcesses:
+            raise ValueError("Assignment of eventBlueEffect has not been assigned. It is still the default value.")
+        self.setupSounds()
+
+    def run_loop(self) -> None:
+        """"""
+        if self.eventRedEffect.is_set():
+            self.playRandomRedSong()
+            self.eventRedEffect.clear()
+        if self.eventBlueEffect.is_set():
+            self.playRandomBlueSong()
+            self.eventBlueEffect.clear()
+
+    def assignEventsSoundEffects(self, redEvent, blueEvent) -> None:
+        """"""
+        self.eventRedEffect = self.assignEvent(redEvent)
+        self.eventBlueEffect = self.assignEvent(blueEvent)
+
+# End of class sbSoundsMpSpawning
 
 
 # -----------------------------------------------------------------------------
