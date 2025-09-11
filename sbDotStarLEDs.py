@@ -9,11 +9,14 @@ import sys   # System-specific parameters and functions
 
 try:
     # Adafruit board library
-    import board 
-    # Adafruit DotStar library
-    import adafruit_dotstar as dotstar 
+    import board  # pyright: ignore[reportMissingImports]
 except ModuleNotFoundError:
-    print("Module 'adafruit_dotstar' and/or 'board' Not Found. Don't use class sbDotStarLEDs.")
+    print("Module 'board' Not Found. Don't use class sbDotStarLEDs.")
+try:
+    # Adafruit DotStar library
+    import adafruit_dotstar as dotstar  # pyright: ignore[reportMissingImports]
+except ModuleNotFoundError:
+    print("Module 'adafruit_dotstar' Not Found. Don't use class sbDotStarLEDs.")
 
 from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool
 from processSpawning import SpawnProcess
