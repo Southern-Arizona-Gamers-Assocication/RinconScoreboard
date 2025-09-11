@@ -13,7 +13,7 @@ import random
 
 
 try:
-    # for audio files 
+    # Import Sound library to play audio files 
     import pygame # pyright: ignore[reportMissingImports]
 except ModuleNotFoundError:
     print("Module pygame Not Found. Don't use class sbSound.")
@@ -21,10 +21,9 @@ except ModuleNotFoundError:
 import configSetttingsBase as cb
 from processSpawning import SpawnProcess
 
-# SoundConfig description: Holds all the sound settings
-# Instantiation Syntax: SoundConfig()
+# Define Functions and Classes Here
 class SoundSettingsConfig(cb.ConfigSettingsBase):
-    """"""
+    """SoundConfig: Holds all the sound settings. Instantiation Syntax: SoundSettingsConfig()"""
     _configSection_Name = "Sound Settings"
 
     Directory_Red_Sounds = cb.ConfigSetting("red_sounds")

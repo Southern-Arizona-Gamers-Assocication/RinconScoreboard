@@ -4,8 +4,11 @@
 # 
 #
 
-import sys   # System-specific parameters and functions
+import sys
+from time import sleep   # System-specific parameters and functions
 #import os    # Miscellaneous operating system interfaces
+from ctypes import c_int32
+from multiprocessing.sharedctypes import Value
 
 try:
     # Import Raspberry Pi GPIO library
@@ -16,10 +19,9 @@ except ModuleNotFoundError:
 from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool
 from processSpawning import SpawnProcess
 
-# SoundConfig description: Holds all the sound settings
-# Instantiation Syntax: SoundConfig()
+# Define Functions and Classes Here
 class ButtonsSettingsConfig(ConfigSettingsBase):
-    """"""
+    """ButtonsSettingsConfig: Holds all the button settings. Instantiation Syntax: ButtonsSettingsConfig()"""
     _configSection_Name = "Button Settings"
 
     Scores_File = ConfigSetting("scores.txt")
@@ -28,18 +30,23 @@ class ButtonsSettingsConfig(ConfigSettingsBase):
     GPIO_PinNum_Score_Red = ConfigSetting(19)
     GPIO_PinNum_Score_Blue = ConfigSetting(16)
     See_GPIO_Warnings = ConfigSettingBool("No")
-
 # End of class ButtonsSettingsConfig
 
-# Define Functions and Classes Here
 class sbButtonsInterface:
     """Class description:
        Instantiation Syntax: className() See __init__() for syntax details.
     """
-    def __init__(self) -> None:
+    def __init__(self, redScore: int = 0, blueScore: int = 0) -> None:
         """Customize the current instance to a specific initial state."""
         # Be sure to read current score from file.
-        self.score: dict[str, int]= {"red": 0, "blue": 0}
+        if isinstance(redScore, int):
+            self.scoreRed = redScore
+        else:
+            raise TypeError("Parameter: redScore needs to be an int().")
+        if isinstance(blueScore, int):
+            self.scoreBlue = blueScore
+        else:
+            raise TypeError("Parameter: blueScore needs to be an int().")
         # These will be assigned to the appropriate functions/methods during setup. Otherwise they do nothing
         self.redEffect_PlaySound = self.dummyMethond
         self.blueEffect_PlaySound = self.dummyMethond
@@ -118,20 +125,20 @@ class sbButtonsInterface:
 
     def readScoresFromFile(self) -> None:
         """"""
-        inf = open(self.settings.Scores_File,'r').readlines()
-        self.score["red"] = int(inf[0].strip())
-        self.score["blue"] = int(inf[1].strip())
+        with open(self.settings.Scores_File,'r') as f:
+            linesList = f.readlines(1000)
+            self.scoreRed = int(linesList[0])
+            self.scoreBlue = int(linesList[1])
 
     def writeScoresToFile(self) -> None:
         """"""
-        outf = open(self.settings.Scores_File,'w')
-        outf.write(f"{self.score["red"]}\n{self.score["blue"]}\n")
-        outf.close()
+        with open(self.settings.Scores_File,'w') as f:
+            f.write(f"{self.scoreRed}\n{self.scoreBlue}\n")
 
     def dummyMethond(self) -> None:
         """dummyMethond is just for initializing references to collable objects"""
         pass
-# End of class className
+# End of class sbButtonsInterface
 
 # sbButtonsInterfaceMpSpawning() Loads and Plays the sounds for the Scoreboard.
 class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
@@ -140,12 +147,14 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
     Instantiation Syntax: sbButtonsInterfaceMpSpawning()
     """
 
-    def __init__(self) -> None:
+    def __init__(self, redScore: int = 0, blueScore: int = 0) -> None:
         """"""
         print(f"Executing: sbButtonsInterfaceMpSpawning.__init__()")
-        sbButtonsInterface.__init__(self)
+        sbButtonsInterface.__init__(self, redScore, blueScore)
         SpawnProcess.__init__(self, "Sounds")
-        print(f"Done Executing: sbButtonsInterfaceMpSpawning.__init__()")
+        # Setup Shared Values
+        self.scoreRedShare = Value(c_int32, self.scoreRed)
+        self.scoreBlueShare = Value(c_int32, self.scoreBlue)
         # Setup Sound Effeet Events
         self.eventRedSoundEffect = self.createEvent()
         self.redEffect_PlaySound = self.eventRedSoundEffect.set
@@ -159,7 +168,7 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
         # Setup Score Incriment Queues
         self.queueRedScoreIncriment = self.createQueue()
         self.queueBlueScoreIncriment = self.createQueue()
-        self.queueUpdateScores = self.createQueue()
+        print(f"Done Executing: sbButtonsInterfaceMpSpawning.__init__()")
 
     def scoreRedCallBack(self, channel) -> None:
         """"""
@@ -172,27 +181,37 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
         """"""
         print(f'{self.name} process is setting up!', flush=True)
         self.setupButtons()
+        self.scoreRedShare.value =  self.scoreRed # pyright: ignore[reportAttributeAccessIssue]
+        self.scoreBlueShare.value = self.scoreBlue # pyright: ignore[reportAttributeAccessIssue]
 
     def run_loop(self) -> None:
         """"""
         if not self.queueRedScoreIncriment.empty() or not self.queueBlueScoreIncriment.empty():
             print("Updating scores.")
-            self.flushScoreIncrimentQueue("red", self.queueRedScoreIncriment)
-            self.flushScoreIncrimentQueue("blue", self.queueBlueScoreIncriment)
-            print()            
+            self.scoreRed = self.flushScoreIncrimentQueue(self.queueRedScoreIncriment, "Red")
+            self.scoreBlue = self.flushScoreIncrimentQueue(self.queueBlueScoreIncriment, "Blue")
+            print(f"Red: {self.scoreRed}; Blue: {self.scoreBlue}")
+            self.writeScoresToFile()
+            self.scoreRedShare.value =  self.scoreRed # pyright: ignore[reportAttributeAccessIssue]
+            self.scoreBlueShare.value = self.scoreBlue # pyright: ignore[reportAttributeAccessIssue]
 
     def run_shutdown(self) -> None:
         """"""
         print(f'{self.name} process is shutting down!', flush=True)
 
-    def flushScoreIncrimentQueue(self, c: str, q) -> None:
-        for i in range(10):
+    def run_shutdownMustRun(self) -> None:
+        """"""
+        GPIO.cleanup() # pyright: ignore[reportPossiblyUnboundVariable]
+
+    def flushScoreIncrimentQueue(self, q, c: str = "") -> int:
+        x = 0
+        for i in range(30):
             if q.empty():
                 break
-            print(f"  {i} - Incriment {c} score.")
-            self.score[c] += q.get_nowait()
-
-
+            print(f"  Incriment {c} score {i} times.")
+            x += q.get_nowait()
+            sleep(0.001)
+        return x
 # End of class sbButtonsInterfaceMpSpawning
 
 # -----------------------------------------------------------------------------

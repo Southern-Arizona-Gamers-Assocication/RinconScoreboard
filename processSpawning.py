@@ -54,6 +54,7 @@ class SpawnProcess(mp.Process):
             self.run_shutdown()
         finally:
             self.exitAllProcesses.set()
+            self.run_shutdownMustRun()
 
     def run_setup(self) -> None:
         """Override this to do somethign usefull."""
@@ -68,9 +69,13 @@ class SpawnProcess(mp.Process):
         """Override this to do somethign usefull."""
         print(f'{self.name} process is shutting down!', flush=True)
 
+    def run_shutdownMustRun(self) -> None:
+        """"""
+        pass
+
     def createQueue(self):
         """"""
-        q = mp.Queue(10)
+        q = mp.Queue(20)
         if not hasattr(self, "queueType"):
             self.queueType = type(q)
             self.queuesList.append(q)
