@@ -44,12 +44,20 @@ class sbDotStarLEDs:
 
     def setupDotstars(self) -> None:
         """"""
-        pass
+        # initialize dots (LEDs) 2 strings of 144 RGB LEDs = 288 LEDs
+        self.dots = dotstar.DotStar(board.SCK, board.MOSI, self.settings.TotalNumberOfLEDs, brightness=0.1)
+        self.reset_LEDs()
+        self.dots[0] = (0,0,255)
+        self.dots[287] = (255,0,0)
+
+        threshold_blue = int(math.log(scoreBlue) * 14)
+        threshold_red = int(math.log(scoreRed) * 14)
+        update_LEDs(initialize = True)
+
 
     def reset_LEDs(self) -> None:
         for i in range(self.settings.TotalNumberOfLEDs):
-            self.dots[i] = (0,0,0) # pyright: ignore[reportUndefinedVariable]
-
+            self.dots[i] = (0,0,0) 
 # End of class sbDotStarLEDs
 # -----------------------------------------------------------------------------
 
