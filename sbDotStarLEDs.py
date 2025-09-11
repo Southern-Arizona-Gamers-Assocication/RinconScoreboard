@@ -42,9 +42,13 @@ class sbDotStarLEDs:
 
     settings = DotStarSettingsConfig()
 
-    def reset_LEDs(self):
+    def setupDotstars(self) -> None:
+        """"""
+        pass
+
+    def reset_LEDs(self) -> None:
         for i in range(self.settings.TotalNumberOfLEDs):
-            dots[i] = (0,0,0) # pyright: ignore[reportUndefinedVariable]
+            self.dots[i] = (0,0,0) # pyright: ignore[reportUndefinedVariable]
 
 # End of class sbDotStarLEDs
 # -----------------------------------------------------------------------------
