@@ -18,7 +18,7 @@ try:
 except ModuleNotFoundError:
     print("Module 'adafruit_dotstar' Not Found. Don't use class sbDotStarLEDs.")
 
-from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool
+from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
 from processSpawning import SpawnProcess
 
 # Define Functions and Classes Here
@@ -29,21 +29,30 @@ class DotStarSettingsConfig(ConfigSettingsBase):
     TotalNumberOfLEDs = ConfigSetting(288)
     LEDOverallBrightness = ConfigSetting(0.1)
     LogFactor = ConfigSetting(14)
+    LED_Pulsing_Enabled = ConfigSettingBool("No")
+    LED_Pulsing_Period = ConfigSetting(2.0)
 # End of class DotStarSettingsConfig
 
-class sbDotStarLEDs:
+class sbDotStarLEDs(SubSystemConfigBase):
     """Class description:
        Instantiation Syntax: className() See __init__() for syntax details.
     """
     def __init__(self):
         """Customize the current instance to a specific initial state."""
-        self.scoreRed = 0
-        self.scoreBlue = 0
+        pass
 
     settings = DotStarSettingsConfig()
 
-    def setupDotstars(self) -> None:
+    def setScores(self, red: int, blue: int) -> None:
         """"""
+        self.scoreRed = 0
+        self.scoreBlue = 0
+
+    def setupSubSys(self) -> None:
+        """"""
+        # Do common setup actions.
+        super().setupSubSys()
+
         # initialize dots (LEDs) 2 strings of 144 RGB LEDs = 288 LEDs
         self.dots = dotstar.DotStar(board.SCK, board.MOSI, self.settings.TotalNumberOfLEDs, brightness=0.1)
         self.reset_LEDs()
@@ -53,6 +62,12 @@ class sbDotStarLEDs:
         threshold_blue = int(math.log(scoreBlue) * 14)
         threshold_red = int(math.log(scoreRed) * 14)
         update_LEDs(initialize = True)
+
+    def shutdownSubSys(self) -> None:
+        """"""
+        # Clean up
+        self.reset_LEDs()
+        super().shutdownSubSys()
 
 
     def reset_LEDs(self) -> None:

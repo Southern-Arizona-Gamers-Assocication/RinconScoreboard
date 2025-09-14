@@ -16,7 +16,7 @@ try:
 except ModuleNotFoundError:
     print("Module RPi.GPIO Not Found. Don't use class sbButtonsInterface.")
 
-from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool
+from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
 from processSpawning import SpawnProcess
 
 # Define Functions and Classes Here
@@ -32,7 +32,7 @@ class ButtonsSettingsConfig(ConfigSettingsBase):
     See_GPIO_Warnings = ConfigSettingBool("No")
 # End of class ButtonsSettingsConfig
 
-class sbButtonsInterface:
+class sbButtonsInterface(SubSystemConfigBase):
     """Class description:
        Instantiation Syntax: className() See __init__() for syntax details.
     """
@@ -56,9 +56,13 @@ class sbButtonsInterface:
 
     settings = ButtonsSettingsConfig()
 
-    def setupButtons(self) -> None:
+    def setupSubSys(self) -> None:
         """"""
+        # Do common setup actions.
+        super().setupSubSys()
+
         self.readScoresFromFile()
+
         # Setup GPIO for buttons
         GPIO.setmode(GPIO.BCM) # pyright: ignore[reportPossiblyUnboundVariable]
         # Ignore warning for now 
@@ -99,7 +103,13 @@ class sbButtonsInterface:
                               GPIO.RISING,                          # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.scoreBlueCallBack,
                               bouncetime=50) 
-    # End of setupButtons() Method
+    # End of setupSubSys() Method
+
+    def shutdownSubSys(self) -> None:
+        """"""
+        # Clean up
+        GPIO.cleanup() # pyright: ignore[reportPossiblyUnboundVariable]
+        super().shutdownSubSys()
 
     def effectRedCallBack(self, channel) -> None:
         """"""
@@ -152,9 +162,6 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
         print(f"Executing: sbButtonsInterfaceMpSpawning.__init__()")
         sbButtonsInterface.__init__(self, redScore, blueScore)
         SpawnProcess.__init__(self, "Sounds")
-        # Setup Shared Values
-        self.scoreRedShare = Value(c_int32, self.scoreRed)
-        self.scoreBlueShare = Value(c_int32, self.scoreBlue)
         # Setup Sound Effeet Events
         self.eventRedSoundEffect = self.createEvent()
         self.redEffect_PlaySound = self.eventRedSoundEffect.set
@@ -168,6 +175,9 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
         # Setup Score Incriment Queues
         self.queueRedScoreIncriment = self.createQueue()
         self.queueBlueScoreIncriment = self.createQueue()
+        # Setup Shared Scores
+        self.scoreRedShare = Value(c_int32, self.scoreRed)
+        self.scoreBlueShare = Value(c_int32, self.scoreBlue)
         print(f"Done Executing: sbButtonsInterfaceMpSpawning.__init__()")
 
     def scoreRedCallBack(self, channel) -> None:
@@ -180,20 +190,23 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
     def run_setup(self) -> None:
         """"""
         print(f'{self.name} process is setting up!', flush=True)
-        self.setupButtons()
+        self.setupSubSys()
         self.scoreRedShare.value =  self.scoreRed # pyright: ignore[reportAttributeAccessIssue]
         self.scoreBlueShare.value = self.scoreBlue # pyright: ignore[reportAttributeAccessIssue]
 
-    def run_loop(self) -> None:
+    def run_loop(self) -> bool:
         """"""
         if not self.queueRedScoreIncriment.empty() or not self.queueBlueScoreIncriment.empty():
             print("Updating scores.")
-            self.scoreRed = self.flushScoreIncrimentQueue(self.queueRedScoreIncriment, "Red")
-            self.scoreBlue = self.flushScoreIncrimentQueue(self.queueBlueScoreIncriment, "Blue")
-            print(f"Red: {self.scoreRed}; Blue: {self.scoreBlue}")
-            self.writeScoresToFile()
+            # Flushing red queue
+            self.scoreRed += self.flushScoreIncrimentQueue(self.queueRedScoreIncriment, "Red")
             self.scoreRedShare.value =  self.scoreRed # pyright: ignore[reportAttributeAccessIssue]
+            # Flushing red queue
+            self.scoreBlue += self.flushScoreIncrimentQueue(self.queueBlueScoreIncriment, "Blue")
             self.scoreBlueShare.value = self.scoreBlue # pyright: ignore[reportAttributeAccessIssue]
+            self.writeScoresToFile()
+            print(f"Red: {self.scoreRed}; Blue: {self.scoreBlue}")
+        return False
 
     def run_shutdown(self) -> None:
         """"""
@@ -201,7 +214,7 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
 
     def run_shutdownMustRun(self) -> None:
         """"""
-        GPIO.cleanup() # pyright: ignore[reportPossiblyUnboundVariable]
+        self.shutdownSubSys()
 
     def flushScoreIncrimentQueue(self, q, c: str = "") -> int:
         x = 0
@@ -210,7 +223,7 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
                 break
             print(f"  Incriment {c} score {i} times.")
             x += q.get_nowait()
-            sleep(0.001)
+            #sleep(0.001)
         return x
 # End of class sbButtonsInterfaceMpSpawning
 
@@ -226,16 +239,16 @@ def main() -> int:
     # Setup Done now run tests
 
     sounds = sbSounds()
-    sounds.setupSounds()
+    sounds.setupSubSys()
 
     buttons = sbButtonsInterface()
-    buttons.setupButtons()
+    buttons.setupSubSys()
     buttons.redEffect_PlaySound = sounds.playRandomRedSong
     buttons.blueEffect_PlaySound = sounds.playRandomBlueSong
 
     message = input("Press enter to quit\n\n") # Run until someone presses enter
     # Clean up
-    GPIO.cleanup() # pyright: ignore[reportPossiblyUnboundVariable]
+    buttons.shutdownSubSys()
     print(f"blue: {buttons.scoreBlue}, red: {buttons.scoreRed}\n")
 
     # Return 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)

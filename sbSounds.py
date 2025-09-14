@@ -18,25 +18,25 @@ try:
 except ModuleNotFoundError:
     print("Module pygame Not Found. Don't use class sbSound.")
 
-import configSetttingsBase as cb
+from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
 from processSpawning import SpawnProcess
 
 # Define Functions and Classes Here
-class SoundSettingsConfig(cb.ConfigSettingsBase):
+class SoundSettingsConfig(ConfigSettingsBase):
     """SoundConfig: Holds all the sound settings. Instantiation Syntax: SoundSettingsConfig()"""
     _configSection_Name = "Sound Settings"
 
-    Directory_Red_Sounds = cb.ConfigSetting("red_sounds")
-    Directory_Blue_Sounds = cb.ConfigSetting("blue_sounds")
-    Volume_Percent_Normal = cb.ConfigSetting("50%")
-    SoundTest_Volume = cb.ConfigSetting("20%")
-    SoundTest_Wait_for_Sound_End = cb.ConfigSettingBool("Yes")
-    SoundTest_Print_Sound_Duration  = cb.ConfigSettingBool("Yes")
-    SoundTest_Sound_Duration_Timeout  = cb.ConfigSetting(5.0)
+    Directory_Red_Sounds = ConfigSetting("red_sounds")
+    Directory_Blue_Sounds = ConfigSetting("blue_sounds")
+    Volume_Percent_Normal = ConfigSetting("50%")
+    SoundTest_Volume = ConfigSetting("20%")
+    SoundTest_Wait_for_Sound_End = ConfigSettingBool("Yes")
+    SoundTest_Print_Sound_Duration  = ConfigSettingBool("Yes")
+    SoundTest_Sound_Duration_Timeout  = ConfigSetting(5.0)
 # End of class SoundSettingsConfig
 
 # sbSounds() Loads and Plays the sounds for the Scoreboard.
-class sbSounds:
+class sbSounds(SubSystemConfigBase):
     """
     sbSounds() Loads and Plays the sounds for the Scoreboard.
     Instantiation Syntax: SBsounds()
@@ -99,7 +99,7 @@ class sbSounds:
     def playRandomSongFromGroup(self,groupName: str):
         """Plays a radom song from a group if no other sound is playing."""
         if  (not pygame.mixer.get_busy()): # pyright: ignore[reportPossiblyUnboundVariable]
-            sndName = random.choice(list(self._Sounds[groupName].keys()))
+            sndName = random.choice(list(self._Sounds[groupName]))
             self._Sounds[groupName][sndName].play()
             print(f"Playing sound: {sndName}")
     def playRandomRedSong(self):
@@ -128,23 +128,22 @@ class sbSounds:
         print("Finished the initialization of the red and blue sounds.")
 
 
-    def setupSounds(self) -> None:
+    def setupSubSys(self) -> None:
         """Setup and initialize the sound system."""
-        if self.settings.areSectionSsettingsUpdated() or (__name__ != 'scoreboard.py'):
-            #initialize pygame library
-            pygame.init() # pyright: ignore[reportPossiblyUnboundVariable]
+        # Do common setup actions.
+        super().setupSubSys()
+        #initialize pygame library
+        pygame.init() # pyright: ignore[reportPossiblyUnboundVariable]
 
-            # Load Red sounds group directory
-            print("Loading the red sounds.")
-            self.loadSoundsFromDirectory(self.settings.Directory_Red_Sounds)
+        # Load Red sounds group directory
+        print("Loading the red sounds.")
+        self.loadSoundsFromDirectory(self.settings.Directory_Red_Sounds)
 
-            # Load Blue sounds group directory
-            print("Loading the blue sounds.")
-            self.loadSoundsFromDirectory(self.settings.Directory_Blue_Sounds)
+        # Load Blue sounds group directory
+        print("Loading the blue sounds.")
+        self.loadSoundsFromDirectory(self.settings.Directory_Blue_Sounds)
 
-            self.testSounds()
-        else:
-            raise RuntimeError("Configuration file has not been loaded")
+        self.testSounds()
 # End of class sbSounds
 
 # sbSoundsMpSpawning() Loads and Plays the sounds for the Scoreboard.
@@ -171,13 +170,13 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
     def run_setup(self) -> None:
         """"""
         print(f'{self.name} process is setting up!', flush=True)
-        if self.eventRedEffect == self.exitAllProcesses:
+        if self.eventRedEffect == self.__exitAllProcesses:
             raise ValueError("Assignment of eventRedEffect has not been assigned. It is still the default value.")
-        if self.eventBlueEffect == self.exitAllProcesses:
+        if self.eventBlueEffect == self.__exitAllProcesses:
             raise ValueError("Assignment of eventBlueEffect has not been assigned. It is still the default value.")
-        self.setupSounds()
+        self.setupSubSys()
 
-    def run_loop(self) -> None:
+    def run_loop(self) -> bool:
         """"""
         if self.eventRedEffect.is_set():
             self.playRandomRedSong()
@@ -185,6 +184,7 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
         if self.eventBlueEffect.is_set():
             self.playRandomBlueSong()
             self.eventBlueEffect.clear()
+        return True
 
     def assignEventsSoundEffects(self, redEvent, blueEvent) -> None:
         """"""
@@ -202,7 +202,7 @@ def main() -> int:
 
     sounds = sbSoundsMpSpawning()
     #sounds = sbSounds()
-    sounds.setupSounds()
+    sounds.setupSubSys()
     sounds.playRandomRedSong()
     sounds.playRandomBlueSong()
 

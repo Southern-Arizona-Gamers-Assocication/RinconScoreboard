@@ -152,7 +152,6 @@ class ConfigSettingBool(ConfigSetting):
                                     "")
 # End of class ConfigSettingBool
 
-# Instantiation Syntax: ConfigSettingsBase()
 class ConfigSettingsBase:
     """
     ConfigSettingsBase is the basic settings configuration class.  This class should be used 
@@ -188,9 +187,9 @@ class ConfigSettingsBase:
                               "the configuration file.")
         #print(f"In ConfigSettingsBase's __init__(); updateFromConfigFile = {updateFromConfigFile}")
         if isinstance(updateFromConfigFile, bool) and not updateFromConfigFile:
-            self.__allSectionSsettingsUpdated__ = True 
+            self.__allSectionSsettingsUpdated = True 
         else:
-            self.__allSectionSsettingsUpdated__ = False
+            self.__allSectionSsettingsUpdated = False
     # End of __init__() Method
 
     def getSectionName(self) -> str: 
@@ -222,7 +221,7 @@ class ConfigSettingsBase:
             if name not in self.__configSettings__:
                 print("Config Warning: '{0:s}; {1:s}' is not used./n/t Is it spelled correctly or deprecated?"
                       .format(self.getSectionName(),name))
-        self.__allSectionSsettingsUpdated__ = True
+        self.__allSectionSsettingsUpdated = True
 
     def getSectionSettings(self) -> dict[str, str]:
         """Returns the configuration settings as dictionary of strings. {self:'instanceName'}.sectionAllSettings will invoke this getter."""
@@ -233,7 +232,7 @@ class ConfigSettingsBase:
 
     def areSectionSsettingsUpdated(self) -> bool:
         #return self.__settingsLoadedFromConfigFile__
-        return self.__allSectionSsettingsUpdated__
+        return self.__allSectionSsettingsUpdated
 
     def printSectionSettings(self):
         """"""
@@ -251,6 +250,26 @@ class ConfigSettingsBase:
         if not stringOnly:
             print("\n".join(s))
         return "\n".join(s)
+# End of class ConfigSettingsBase
+
+class SubSystemConfigBase:
+    """"""
+    # Override this in the subclass by the customized settings
+    settings = ConfigSettingsBase()
+
+    def isReadyToSetup(self) -> bool:
+        """"""
+        return self.settings.areSectionSsettingsUpdated() or (__name__ != 'scoreboard.py')
+
+    def setupSubSys(self) -> None:
+        """IF Overriding this Method, THis one NEEDS to be called on the first line. Ex 'super().setupSubSys()'.
+            If not ready to set up this will Raise a RuntimeError."""
+        if not self.isReadyToSetup():
+            raise RuntimeError("Configuration file has not been loaded")
+
+    def shutdownSubSys(self) -> None:
+        """"""
+        pass
 # End of class ConfigSettingsBase
 
 # -----------------------------------------------------------------------------
