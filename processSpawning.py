@@ -4,15 +4,63 @@
 # 
 # 
 
-from concurrent.futures import ThreadPoolExecutor
 import sys   # System-specific parameters and functions
-#import os    # Miscellaneous operating system interfaces
+import os    # Miscellaneous operating system interfaces
 from collections import Counter
 from time import sleep
 from typing import cast
 import multiprocessing as mp
+from multiprocessing.shared_memory import SharedMemory
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 # Define Functions and Classes Here
+class SharedInteger32:
+    """creates a shared memory location for multiple processes to share an integer. """
+    __maxbits = 32
+    __maxBytes = (__maxbits//8) + (__maxbits%8 > 0)
+    __maxValue = 2**(__maxbits-1)-1
+    __minValue = -2**(__maxbits-1)
+    __byteOrder = sys.byteorder
+    def __init__(self, shareName: str|None = None, value: int|None = None) -> None:
+        """
+        __init__() Initialise the class and creates or attaches to a shared memory locaton for a 32 bit signed integer (-2^31 to 2^31 -1).
+
+        :param shareName: The name of the shared space. If sharedName is "" or None create the shared memory space otherwise attach to an exiting one.
+        :type shareName: str | None
+        :param value: The int to share if createing a the shared memory space. If attaching to an existing share, "value" is ignored. 
+        :type value: int
+        """
+        if shareName == "" or shareName == None:
+            self.name = None
+            createSM = True
+        elif isinstance(value, str):
+            self.name = shareName
+            createSM = False
+        else:
+            raise TypeError("Parameter, 'shareName', needs to be of type str or None.")
+        if isinstance(value, int):
+            self.__value = value
+        else:
+            raise TypeError("Parameter, 'value', needs to be of type int.")
+        #self.__MemoryToShare = SharedMemory(shareName, createSM, self.__maxBytes)
+        #self.__name = self.__MemoryToShare.name
+        #self.__memBuf = self.__MemoryToShare.buf
+        if createSM:
+            self.__memBuf = value.to_bytes(self.__maxBytes)
+        self.__lock = mp.Lock()
+
+    intFromBytes = partial()
+    def __get__(self, instance, owningClass=None):
+        """"""
+        return int.from_bytes(self.__memBuf)
+    
+    def __set__(self, instance, value: int):
+        """"""
+        raise AttributeError(f"{self.__nameMe__} is a READ ONLY attribute. Use class (or a subclass of) ConfigSettingsBase's update* Methods.")
+
+# End of class SharedInteger
+
 class SpawnProcess(mp.Process):
     """Class description:
        Instantiation Syntax: className() See __init__() for syntax details.
@@ -65,36 +113,37 @@ class SpawnProcess(mp.Process):
         self.nameAndPID = f"PID={self.pid}: {self.name}"
         # Create the Setup Done instance
         self.setupDone = self.createEvent()
-        self.__startHasNotRun = True    # TODO make this a readonly descriptor.
-        print(f"{self.__exitAllProcesses} = Exit All Processes event from {pName}.")
+        self.__startHasRun = self.createEvent()
+        self.__shutdownMustRunHasRun = self.createEvent()
+        print(f"{self.__exitAllProcesses} = Exit All Processes event from {pName}. calling(pid: {os.getpid()}; ppid: {os.getppid()})")
         #print(f"{pName} is done Executing: SpawnProcess.__init__()")
 
     def didStartRun(self) -> bool:
         """didStartRun() returns True if Start was successfully executed."""
-        return not self.__startHasNotRun
+        return self.__startHasRun.is_set()
 
     def start(self):
         """Start the process's activity after passing a check to see if this instance is ready to start 
             (method readyToStart() returns true). If readyToStart() returns false, a RuntimeError is raised. 
             This must be called at most once per process object. It arranges for the object's run() method 
             to be invoked in a separate process."""
-        if self.__startHasNotRun:
+        if self.__startHasRun.is_set():
+            raise RuntimeError(f"{self.nameAndPID}: Start has called more than once ")
+        else:
             if self.isReadyToStart():
                 # Actually calling Process.start(). Now this can't be done again in the same instance.
-                self.__startHasNotRun = False
                 super().start()
+                self.__startHasRun.set()
                 print(f"{self.nameAndPID} is done calling start()", flush=True)
             else:
                 raise RuntimeError(f"{self.nameAndPID}.isReadyToStart() returned False so this process is not " +
                                     "ready to start. Check the logic in isReadyToStart() and it's subclass overrides.")
-        else:
-            raise RuntimeError(f"{self.nameAndPID}: Start has called more than once ")
 
     def run(self) -> None:
         """IF Overriding this Method, the main loop should not be replaced but more complex Setup and Shutdown can be used. 
             This method NEEDS to be called to keep most functionality. Ex: super().run() """
         try:
-            self.nameAndPID = f"{self.name}(PID: {self.pid})"
+            self.nameAndPID = f"PID={self.pid}: {self.name}"
             self.run_setup()
             self.setupDone.set()
             while True:
@@ -107,10 +156,11 @@ class SpawnProcess(mp.Process):
         finally:
             self.__exitAllProcesses.set()
             self.run_shutdownMustRun()
+            self.__shutdownMustRunHasRun.set()
 
     def isReadyToStart(self) -> bool:
         """IF Overriding this Method, THis one NEEDS to be called. Ex 'super().isReadyToStart()'."""
-        if self.didStartRun():
+        if self.__startHasRun.is_set():
             print(f"{self.nameAndPID}: This instance's start() has already successfully been excicuted.", flush=True)
             return False
         return True
@@ -118,10 +168,10 @@ class SpawnProcess(mp.Process):
     def run_setup(self) -> None:
         """run_setup() is called when run() is starting before the "while True" Loop.
             Override this to do somethign usefull."""
-        print(f'{self.nameAndPID} process is setting up!', flush=True)
+        print(f'PPID: {os.getppid()}; PID: {os.getpid()}; {self.nameAndPID} process is setting up!', flush=True)
 
     def run_loop(self) -> bool:
-        """run_loop() is called inside run()'s "while True" Loop after the exit event is checked.
+        """run_loop() is called inside run()'s "while True" Loop after checking that the exit event is not set.
             run_loop() returns a True if the default sleep should be used. 
             Override this to do somethign usefull."""
         print(f'{self.nameAndPID} process running...', flush=True)
@@ -149,6 +199,13 @@ class SpawnProcess(mp.Process):
             self.queuesList = [q]
         return q
 
+    def assignQueue(self, q):
+        """"""
+        if not isinstance(q, self.queueType):
+            raise ValueError("The queue parameter must ultimately be assigned by multiprocessing.Queue() or None if it is to be assigned later. " + 
+                             "It must be assigned before calling .start(). Calling assignQueue(.createQueue()) is the easiest method.")
+        return q
+
     def createEvent(self):
         """"""
         return mp.Event()
@@ -160,15 +217,11 @@ class SpawnProcess(mp.Process):
                              "It must be assigned before calling .start(). Calling assignEvent() is the easiest method.")
         return e
 
-    def assignQueue(self, q):
-        """"""
-        if not isinstance(q, self.queueType):
-            raise ValueError("The queue parameter must ultimately be assigned by multiprocessing.Queue() or None if it is to be assigned later. " + 
-                             "It must be assigned before calling .start(). Calling assignQueue(.createQueue()) is the easiest method.")
-        return q
-
     def cleanUpProcess(self) -> None:
         """IF Overriding this Method, THis one NEEDS to be called. Ex 'super().CloseThisProcess()'."""
+        if self.__startHasRun.is_set() and not self.__shutdownMustRunHasRun.is_set():
+            print(f"{self.name}.run_shutdownMustRun() is running at cleanup ")
+            self.run_shutdownMustRun()
         if hasattr(self, "queuesList"):
             for q in self.queuesList:
                 q.cancel_join_thread()
@@ -217,6 +270,12 @@ def shutdownAndCloseAllSpawnedProcesses(printResults: bool = False) -> list[tupl
             print(f"{r[0]}.exitcode is {r[1]}")
     return resultsList
 # -----------------------------------------------------------------------------
+def info(title):
+    print(f"{title} pid: {os.getpid()}; Parent pid: {os.getppid()}; Module name: {__name__}")
+
+def f(name):
+    info('function f')
+    print('hello', name)
 
 class DeltaProcess(SpawnProcess):
     __exitAllProcesses = "Not correct"

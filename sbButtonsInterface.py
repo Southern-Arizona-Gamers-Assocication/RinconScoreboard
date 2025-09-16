@@ -7,8 +7,6 @@
 import sys
 from time import sleep   # System-specific parameters and functions
 #import os    # Miscellaneous operating system interfaces
-from ctypes import c_int32
-from multiprocessing.sharedctypes import Value
 
 try:
     # Import Raspberry Pi GPIO library
@@ -38,7 +36,7 @@ class sbButtonsInterface(SubSystemConfigBase):
     """
     def __init__(self, redScore: int = 0, blueScore: int = 0) -> None:
         """Customize the current instance to a specific initial state."""
-        # Be sure to read current score from file.
+        # Be sure to read current score from file after reading the config file.
         if isinstance(redScore, int):
             self.scoreRed = redScore
         else:
@@ -61,7 +59,7 @@ class sbButtonsInterface(SubSystemConfigBase):
         # Do common setup actions.
         super().setupSubSys()
 
-        self.readScoresFromFile()
+        (self.scoreRed, self.scoreBlue) = self.readScoresFromFile()
 
         # Setup GPIO for buttons
         GPIO.setmode(GPIO.BCM) # pyright: ignore[reportPossiblyUnboundVariable]
@@ -124,26 +122,27 @@ class sbButtonsInterface(SubSystemConfigBase):
         """"""
         self.scoreRed += 1
         print(f" Red score: {self.scoreRed}")
-        self.writeScoresToFile()
+        self.writeScoresToFile(self.scoreRed, self.scoreBlue)
         self.updateLEDs()
     def scoreBlueCallBack(self, channel) -> None:
         """"""
         self.scoreBlue += 1
         print(f"Blue score: {self.scoreBlue}")
-        self.writeScoresToFile()
+        self.writeScoresToFile(self.scoreRed, self.scoreBlue)
         self.updateLEDs()
 
-    def readScoresFromFile(self) -> None:
+    def readScoresFromFile(self) -> tuple[int, int]:
         """"""
         with open(self.settings.Scores_File,'r') as f:
             linesList = f.readlines(1000)
-            self.scoreRed = int(linesList[0])
-            self.scoreBlue = int(linesList[1])
+            red = int(linesList[0])
+            blue = int(linesList[1])
+            return red, blue
 
-    def writeScoresToFile(self) -> None:
+    def writeScoresToFile(self, red: int, blue: int) -> None:
         """"""
         with open(self.settings.Scores_File,'w') as f:
-            f.write(f"{self.scoreRed}\n{self.scoreBlue}\n")
+            f.write(f"{red}\n{blue}\n")
 
     def dummyMethond(self) -> None:
         """dummyMethond is just for initializing references to collable objects"""
@@ -175,9 +174,9 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
         # Setup Score Incriment Queues
         self.queueRedScoreIncriment = self.createQueue()
         self.queueBlueScoreIncriment = self.createQueue()
-        # Setup Shared Scores
-        self.scoreRedShare = Value(c_int32, self.scoreRed)
-        self.scoreBlueShare = Value(c_int32, self.scoreBlue)
+        # Setup Scores shareing
+        self.queueRedScore = self.createQueue()
+        self.queueBlueScore = self.createQueue()
         print(f"Done Executing: sbButtonsInterfaceMpSpawning.__init__()")
 
     def scoreRedCallBack(self, channel) -> None:
@@ -191,26 +190,27 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
         """"""
         print(f'{self.name} process is setting up!', flush=True)
         self.setupSubSys()
-        self.scoreRedShare.value =  self.scoreRed # pyright: ignore[reportAttributeAccessIssue]
-        self.scoreBlueShare.value = self.scoreBlue # pyright: ignore[reportAttributeAccessIssue]
+        self.queueRedScore.put(self.scoreRed)
+        self.queueBlueScore.put(self.scoreBlue)
 
     def run_loop(self) -> bool:
-        """"""
+        """run_loop() is called inside run()'s "while True" Loop after checking that the exit event is not set.
+            run_loop() returns a True if the default sleep should be used. 
+            """
         if not self.queueRedScoreIncriment.empty() or not self.queueBlueScoreIncriment.empty():
             print("Updating scores.")
             # Flushing red queue
             self.scoreRed += self.flushScoreIncrimentQueue(self.queueRedScoreIncriment, "Red")
-            self.scoreRedShare.value =  self.scoreRed # pyright: ignore[reportAttributeAccessIssue]
+            self.queueRedScore.put(self.scoreRed)
             # Flushing red queue
             self.scoreBlue += self.flushScoreIncrimentQueue(self.queueBlueScoreIncriment, "Blue")
-            self.scoreBlueShare.value = self.scoreBlue # pyright: ignore[reportAttributeAccessIssue]
-            self.writeScoresToFile()
+            self.queueBlueScore.put(self.scoreBlue)
+            # Write scores to file.
+            self.writeScoresToFile(self.scoreRed, self.scoreBlue)
             print(f"Red: {self.scoreRed}; Blue: {self.scoreBlue}")
-        return False
-
-    def run_shutdown(self) -> None:
-        """"""
-        print(f'{self.name} process is shutting down!', flush=True)
+            return False
+        else:
+            return True
 
     def run_shutdownMustRun(self) -> None:
         """"""
