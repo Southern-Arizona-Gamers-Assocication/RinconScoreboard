@@ -164,23 +164,23 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
     Instantiation Syntax: sbSoundsMpSpawning()
     """
 
-    def __init__(self, redEvent = None, blueEvent = None) -> None:
+    def __init__(self) -> None:
         """"""
         print(f"Executing: sbSoundsMpSpawning.__init__()")
         sbSounds.__init__(self)
         SpawnProcess.__init__(self, SOUNDS_PROCESS_NAME)
         print(f"Done Executing: sbSoundsMpSpawning.__init__()")
-        # Setup Blue Effeet event
-        if (redEvent is None) and (blueEvent is None):
-            pass
-        elif (redEvent is not None) and (blueEvent is not None):
-            self.assignEventsSoundEffects(redEvent,blueEvent)
-        else:
-            raise AttributeError("Both events have need to be assigned or both need to be not assigned.")
         if "sbButtonsInterfaceMpSpawning" in globals():
             print("sbSoundsMpSpawning can see the class sbButtonsInterfaceMpSpawning")
         if "configFileParser" in globals():
             print("sbSoundsMpSpawning can see the class configFileParser")
+    # End of Method __init__ 
+
+    def assignEventsSoundEffects(self, redEvent, blueEvent) -> None:
+        """"""
+        self.eventRedEffect = self.assignEvent(redEvent)
+        self.eventBlueEffect = self.assignEvent(blueEvent)
+        self.run_setup
 
     def preStartSetup(self) -> None:
         """preStartSetup() needs to be run before start is called and after the other SpawnProcess instances are initialized.
@@ -231,12 +231,6 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
             self.playRandomBlueSong()
             self.eventBlueEffect.clear()
         return True
-
-    def assignEventsSoundEffects(self, redEvent, blueEvent) -> None:
-        """"""
-        self.eventRedEffect = self.assignEvent(redEvent)
-        self.eventBlueEffect = self.assignEvent(blueEvent)
-        self.run_setup
 # End of class sbSoundsMpSpawning
 
 

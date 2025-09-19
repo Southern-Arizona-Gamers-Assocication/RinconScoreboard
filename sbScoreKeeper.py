@@ -8,9 +8,9 @@ import sys
 from time import sleep   # System-specific parameters and functions
 #import os    # Miscellaneous operating system interfaces
 
-from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
-from processSpawning import SpawnProcess, EventType, QueueType, QueueEmptyException
-from sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
+from .configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
+from .processSpawning import SpawnProcess, cast, EventType, QueueType, QueueEmptyException
+from .sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
 
 # Define Constents Here
 SCORE_PROCESS_NAME = "Score_Keeper"
@@ -115,13 +115,35 @@ class sbScoreKeeperMpSpawning(sbScoreKeeper, SpawnProcess):
         print(f"Executing: sbScoreKeeperMpSpawning.__init__()")
         sbScoreKeeper.__init__(self, resetScores, redScore, blueScore)
         SpawnProcess.__init__(self, SCORE_PROCESS_NAME)
-        # Setup Score Incriment Queues
-        self.queueRedScoreIncriment = self.createQueue()
-        self.queueBlueScoreIncriment = self.createQueue()
         # Setup Scores shareing
-        self.queueRedScore = self.createQueue()
-        self.queueBlueScore = self.createQueue()
+        #self.queueRedScore = self.createQueue()
+        #self.queueBlueScore = self.createQueue()
         print(f"Done Executing: sbScoreKeeperMpSpawning.__init__()")
+    # End of Method __init__ 
+
+    def preStartSetup(self) -> None:
+        """preStartSetup() needs to be run before start is called and after the other SpawnProcess instances are initialized.
+            Override this to do somethign usefull."""
+        self.preSetupPostSettingsUpdateGetExternalData()
+        buttonsProcess = cast(sbButtonsInterfaceMpSpawning, self.getInstancesByProcessName()[BUTTONS_PROCESS_NAME])
+        self.assignQueuesScoreIncrementors(buttonsProcess.queueRedScoreIncriment, buttonsProcess.queueBlueScoreIncriment)
+        print(f'{self.name} process is done with pre Start setup.')
+
+    def isReadyToStart(self) -> bool:
+        """Checks to see if the red and blue effect events have been assigned.
+            IF Overriding, this Method NEEDS to be called. Ex 'super().isReadyToStart()'."""
+        if not self.isReadyToSetup():
+            print(f"{self.nameAndPID}.isReadyToSetup() returned false. Hint Has the config file been loaded? ")
+            return False
+        if not super().isReadyToStart():
+            return False
+        if not hasattr(self, "queueRedScoreIncriment"):
+            print(f"{self.nameAndPID}: Assignment of queueBlueScoreIncriment has not occurred.")
+            return False
+        if not hasattr(self, "queueBlueScoreIncriment"):
+            print(f"{self.nameAndPID}: Assignment of queueBlueScoreIncriment has not occurred.")
+            return False
+        return True
 
     def run_setup(self) -> bool:
         """"""
@@ -129,6 +151,7 @@ class sbScoreKeeperMpSpawning(sbScoreKeeper, SpawnProcess):
         self.setupSubSys()
         #self.queueRedScore.put(self.scoreRed)
         #self.queueBlueScore.put(self.scoreBlue)
+        return True
 
     def run_loop(self) -> bool:
         """run_loop() is called inside run()'s "while True" Loop after checking that the exit event is not set.
@@ -138,10 +161,10 @@ class sbScoreKeeperMpSpawning(sbScoreKeeper, SpawnProcess):
             print("Updating scores.")
             # Flushing red queue
             self.scoreRed += self.flushScoreIncrimentQueue(self.queueRedScoreIncriment, "Red")
-            self.queueRedScore.put(self.scoreRed)
+            #self.queueRedScore.put(self.scoreRed)
             # Flushing red queue
             self.scoreBlue += self.flushScoreIncrimentQueue(self.queueBlueScoreIncriment, "Blue")
-            self.queueBlueScore.put(self.scoreBlue)
+            #self.queueBlueScore.put(self.scoreBlue)
             # Write scores to file.
             self.writeScoresToFile(self.scoreRed, self.scoreBlue)
             print(f"Red: {self.scoreRed}; Blue: {self.scoreBlue}", flush=True)
@@ -166,6 +189,12 @@ class sbScoreKeeperMpSpawning(sbScoreKeeper, SpawnProcess):
             #sleep(0.001)
         print(f"  Incriment {c}{"" if c == "" else " "}score {x} times.", flush=True)
         return x
+
+    def assignQueuesScoreIncrementors(self, redQueue, blueQueue) -> None:
+        """"""
+        self.queueRedScoreIncriment = self.assignQueue(redQueue)
+        self.queueBlueScoreIncriment = self.assignQueue(blueQueue)
+        self.run_setup
 # End of class sbScoreKeeperMpSpawning
 
 # -----------------------------------------------------------------------------
@@ -175,22 +204,21 @@ def main() -> int:
     """This is the "Main" function which is called automatically by the last two lines if this is the top level Module. 'Import this_file' will not call main().
     """
     # Import Local modules here.
-    from sbSounds import sbSounds
+    from sbSounds import sbSoundsMpSpawning
+    from .sbButtonsInterface import sbButtonsInterfaceMpSpawning
     print("Import done for local modules.")
     # Setup Done now run tests
 
-    sounds = sbSounds()
-    sounds.setupSubSys()
+    sounds = sbSoundsMpSpawning()
+    #sounds.setupSubSys()
 
-    buttons = sbButtonsInterface()
-    buttons.setupSubSys()
-    buttons.redEffect_PlaySound = sounds.playRandomRedSong
-    buttons.blueEffect_PlaySound = sounds.playRandomBlueSong
+    buttons = sbButtonsInterfaceMpSpawning()
+    #buttons.setupSubSys()
 
     message = input("Press enter to quit\n\n") # Run until someone presses enter
     # Clean up
     buttons.shutdownSubSys()
-    print(f"blue: {buttons.scoreBlue}, red: {buttons.scoreRed}\n")
+    #print(f"blue: {buttons.scoreBlue}, red: {buttons.scoreRed}\n")
 
     # Return 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)
     return 0 

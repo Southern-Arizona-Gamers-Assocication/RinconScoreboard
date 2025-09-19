@@ -6,7 +6,7 @@
 
 import sys
 from time import sleep   # System-specific parameters and functions
-#import os    # Miscellaneous operating system interfaces
+import os    # Miscellaneous operating system interfaces
 
 try:
     # Import Raspberry Pi GPIO library
