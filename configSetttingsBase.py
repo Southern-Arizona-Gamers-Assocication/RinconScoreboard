@@ -10,27 +10,9 @@
 
 import numbers
 
-ENABLE_thisIsExecuting_TO_PRINT = False
-if ENABLE_thisIsExecuting_TO_PRINT: 
-    #from functools import partial
-    from inspect import stack
-    def thisIsExecuting() -> None:
-        """"""
-        s = [""]
-        for fr in stack():
-            s.append(f"{fr.function}")
-        #print(f"Traceback: {'->'.join(s)}")
-        #print(f"Traceback: {classInstance.__qualname__}.{callerName}: {txt}")
-else:
-    def thisIsExecuting() -> None:
-        """Set 'ENABLE_methodIsExecuting_TO_PRINT = True' to enable this function before this function is imported."""
-        pass
-
-
 class ConfigSetting:
     """"""
-
-    def __set_name__(self, owner, name: str) -> None:
+    def __set_name__(self, owner, name) -> None:
         """"""
         if isinstance(name, str):
             if len(name) > 0:
@@ -60,7 +42,7 @@ class ConfigSetting:
         return self.__nameMe__
     def __init__(self, defaultValue) -> None:
         """"""
-        thisIsExecuting()
+        #thisIsExecuting()
         #print(f"Initialising a configuration setting to '{defaultValue}'")
         if isinstance(defaultValue, bool):
             raise TypeError("Use ConfigSettingBool for a boolean type")
@@ -230,7 +212,7 @@ class ConfigSettingsBase:
             settings[name] = str(cSetting)
         return settings
 
-    def areSectionSsettingsUpdated(self) -> bool:
+    def areSettingsUpdatedFromConfigFile(self) -> bool:
         #return self.__settingsLoadedFromConfigFile__
         return self.__allSectionSsettingsUpdated
 
@@ -256,16 +238,28 @@ class SubSystemConfigBase:
     """"""
     # Override this in the subclass by the customized settings
     settings = ConfigSettingsBase()
+    
+    def __init__(self) -> None:
+        """Init Sound subsystem"""
+        self.__preSetupGetExternalData: bool = False
+
+    def preSetupPostSettingsUpdateGetExternalData(self):
+        """"""
+        if self.settings.areSettingsUpdatedFromConfigFile() or (__name__ != 'scoreboard.py'):
+            self.__preSetupGetExternalData = True
+        else:
+            raise RuntimeError("Configuration file has not been read to update settings.")
 
     def isReadyToSetup(self) -> bool:
-        """"""
-        return self.settings.areSectionSsettingsUpdated() or (__name__ != 'scoreboard.py')
+        """IF Overriding this Method, THis one NEEDS to be called. Ex 'super().isReadyToSetup()'.
+            isReadyToSetup() returns True of the subsystem is ready to start, False otherwise."""
+        return self.__preSetupGetExternalData
 
     def setupSubSys(self) -> None:
         """IF Overriding this Method, THis one NEEDS to be called on the first line. Ex 'super().setupSubSys()'.
             If not ready to set up this will Raise a RuntimeError."""
         if not self.isReadyToSetup():
-            raise RuntimeError("Configuration file has not been loaded")
+            raise RuntimeError(f"{self.__class__.__name__}.isReadyToSetup() returned False. Check setup chain.")
 
     def shutdownSubSys(self) -> None:
         """"""

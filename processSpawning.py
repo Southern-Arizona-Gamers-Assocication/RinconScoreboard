@@ -3,16 +3,19 @@
 # Description: 
 # 
 # 
+#from __future__ import annotations
 
 import sys   # System-specific parameters and functions
 import os    # Miscellaneous operating system interfaces
 from collections import Counter
 from time import sleep
-from typing import cast
+from typing import Final, ForwardRef, final
 import multiprocessing as mp
+from multiprocessing.synchronize import Event
+from multiprocessing.queues import Queue
 from multiprocessing.shared_memory import SharedMemory
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial
+from queue import Empty
 
 # Define Functions and Classes Here
 class SharedInteger32:
@@ -43,84 +46,103 @@ class SharedInteger32:
             self.__value = value
         else:
             raise TypeError("Parameter, 'value', needs to be of type int.")
-        #self.__MemoryToShare = SharedMemory(shareName, createSM, self.__maxBytes)
-        #self.__name = self.__MemoryToShare.name
-        #self.__memBuf = self.__MemoryToShare.buf
+        self.__MemoryToShare = SharedMemory(shareName, createSM, self.__maxBytes)
+        self.__name = self.__MemoryToShare.name
+        self.__memBuf = self.__MemoryToShare.buf
         if createSM:
             self.__memBuf = value.to_bytes(self.__maxBytes)
         self.__lock = mp.Lock()
+        
 
-    intFromBytes = partial()
+    def int32FromBytes(self, byteArray) -> int:
+        """"""
+        return int(0)
     def __get__(self, instance, owningClass=None):
         """"""
         return int.from_bytes(self.__memBuf)
     
     def __set__(self, instance, value: int):
         """"""
-        raise AttributeError(f"{self.__nameMe__} is a READ ONLY attribute. Use class (or a subclass of) ConfigSettingsBase's update* Methods.")
-
+        pass
+        #raise AttributeError(f"{self.__nameMe__} is a READ ONLY attribute. Use class (or a subclass of) ConfigSettingsBase's update* Methods.")
 # End of class SharedInteger
 
 class SpawnProcess(mp.Process):
     """Class description:
        Instantiation Syntax: className() See __init__() for syntax details.
     """
-    __instancesByProcessName: dict[str, mp.Process] = {} # TODO make this a readonly descriptor.
+    DEFAULT_QUEUE_SIZE: Final[int] = 30
+    __instancesByProcessName: Final[dict[str, "SpawnProcess"]] = {} # TODO make this a readonly descriptor.
     @classmethod
+    @final
     def getInstancesByProcessName(cls):
         """"""
         return cls.__instancesByProcessName
 
-    __processNames: list[str] = []      # TODO make this a readonly descriptor.
+    __processNames: Final[list[str]] = []      # TODO make this a readonly descriptor.
     @classmethod
+    @final
     def getProcessNames(cls):
         """"""
         return cls.__processNames
 
-    __processNamesCount = Counter()     # TODO make this a readonly descriptor.
+    __processNamesCount: Final[Counter[str]] = Counter()     # TODO make this a readonly descriptor.
     @classmethod
+    @final
     def getProcessNamesCount(cls):
         """"""
         return cls.__processNamesCount
 
-    __exitAllProcesses = mp.Event()
+    __exitAllProcesses: Event = None # pyright: ignore[reportAssignmentType]
     @classmethod
-    def getEventExitAllProcesses(cls):
+    @final
+    def getEventExitAllProcesses(cls) -> Event:
         """The first time this is run, create one Exit event to exit the run()'s "while True" loop. 
             This event needs to be shared by all instances of this class and subclasses so all the 
             processes end and be joined gracefully. """
         return cls.__exitAllProcesses
-    eventType = type(__exitAllProcesses)
     
     def __init__(self, pName: str = "", ) -> None:
         """Customize the current instance to a specific initial state."""
         #print(f"Start Executing: SpawnProcess.__init__()")
         # On first call create the exitAllProcesses event, all other times do nothing because the event is already created. 
         if len(self.__processNames) < 1:
-            self.__class__.__exitAllProcesses = mp.Event()
+            self.__class__.__exitAllProcesses = self.createEvent() # try changing to: SpawnProcess.__exitAllProcesses: Final[Event]
         self.__exitAllProcesses = self.assignEvent(self.__class__.__exitAllProcesses)
         # settign the processes name and making is unique.
         if not (isinstance(pName, str) and len(pName) > 0):
             pName = self.__class__.__name__
-        self.__processNamesCount.update([pName])
-        i = self.__processNamesCount[pName]
+        self.getProcessNamesCount().update([pName])
+        i = self.getProcessNamesCount()[pName]
         if i > 1:
             pName = f"{pName}-{i}"
         # Log the this classes instances and Process names
-        self.__instancesByProcessName[pName] = self
-        self.__processNames.append(pName)
+        self.getInstancesByProcessName()[pName] = self
+        self.getProcessNames().append(pName)
         super().__init__(name = pName)
         self.nameAndPID = f"PID={self.pid}: {self.name}"
         # Create the Setup Done instance
-        self.setupDone = self.createEvent()
         self.__startHasRun = self.createEvent()
-        self.__shutdownMustRunHasRun = self.createEvent()
+        self.__setupDone = self.createEvent()
+        self.__shutdownMustRunCalled = self.createEvent()
         print(f"{self.__exitAllProcesses} = Exit All Processes event from {pName}. calling(pid: {os.getpid()}; ppid: {os.getppid()})")
         #print(f"{pName} is done Executing: SpawnProcess.__init__()")
 
-    def didStartRun(self) -> bool:
-        """didStartRun() returns True if Start was successfully executed."""
-        return self.__startHasRun.is_set()
+    def preStartSetup(self, q: Queue) -> None:
+        """preStartSetup() needs to be run before start is called and after the other SpawnProcess instances are initialized.
+            Override this to do somethign usefull."""
+        self.pNum = self.getProcessNames().index(self.name)
+        self.numTotalProcesses = len(self.getProcessNames())
+        self.processesDidStartRun: list[Event] = []
+        for p in self.getInstancesByProcessName().values():
+            self.processesDidStartRun.append(p.__setupDone)
+        self.dataQueue = q
+        #if self.pNum == 0:
+        #    self.dataQueue = self.createQueue(100)
+        #else:
+        #    self.dataQueue = self.getInstancesByProcessName()[self.getProcessNames()[0]].dataQueue
+        #print(f'{self.pNum}.{self.name} process is done with pre Start setup.')
+        #pass
 
     def start(self):
         """Start the process's activity after passing a check to see if this instance is ready to start 
@@ -128,15 +150,15 @@ class SpawnProcess(mp.Process):
             This must be called at most once per process object. It arranges for the object's run() method 
             to be invoked in a separate process."""
         if self.__startHasRun.is_set():
-            raise RuntimeError(f"{self.nameAndPID}: Start has called more than once ")
+            raise RuntimeError(f"{self.name}: Start has called more than once ")
         else:
             if self.isReadyToStart():
                 # Actually calling Process.start(). Now this can't be done again in the same instance.
                 super().start()
                 self.__startHasRun.set()
-                print(f"{self.nameAndPID} is done calling start()", flush=True)
+                print(f"{self.name} is done calling start()", flush=True)
             else:
-                raise RuntimeError(f"{self.nameAndPID}.isReadyToStart() returned False so this process is not " +
+                raise RuntimeError(f"{self.name}.isReadyToStart() returned False so this process is not " +
                                     "ready to start. Check the logic in isReadyToStart() and it's subclass overrides.")
 
     def run(self) -> None:
@@ -144,19 +166,22 @@ class SpawnProcess(mp.Process):
             This method NEEDS to be called to keep most functionality. Ex: super().run() """
         try:
             self.nameAndPID = f"PID={self.pid}: {self.name}"
-            self.run_setup()
-            self.setupDone.set()
-            while True:
-                if  self.__exitAllProcesses.is_set():
-                    print(f'{self.nameAndPID} process noticed that the event exitAllProcesses is set! Now exiting.', flush=True)
-                    break
-                if self.run_loop():
-                    sleep(0.1)
+            useLoop = self.run_setup()
+            self.__setupDone.set()
+            if useLoop:
+                while True:
+                    if  self.__exitAllProcesses.is_set():
+                        print(f'{self.nameAndPID} process noticed that the event exitAllProcesses is set! Now exiting.', flush=True)
+                        break
+                    if self.run_loop():
+                        sleep(0.1)
+            else:
+                self.__exitAllProcesses.wait()
             self.run_shutdown()
         finally:
             self.__exitAllProcesses.set()
             self.run_shutdownMustRun()
-            self.__shutdownMustRunHasRun.set()
+            self.__shutdownMustRunCalled.set()
 
     def isReadyToStart(self) -> bool:
         """IF Overriding this Method, THis one NEEDS to be called. Ex 'super().isReadyToStart()'."""
@@ -165,23 +190,43 @@ class SpawnProcess(mp.Process):
             return False
         return True
     
-    def run_setup(self) -> None:
+    def run_setup(self) -> bool:
         """run_setup() is called when run() is starting before the "while True" Loop.
+            run_setup() returns True to call run_loop() from the "while True" Loop or False to block while waiting for the exit all events to be set. 
             Override this to do somethign usefull."""
-        print(f'PPID: {os.getppid()}; PID: {os.getpid()}; {self.nameAndPID} process is setting up!', flush=True)
+        sleep(self.pNum * 0.2)
+        hasStarted = []
+        i = 0
+        for e in self.processesDidStartRun:
+            hasStarted.append(f"{i}={"Y" if e.is_set() else "n"}")
+            i += 1
+        print(" ".join(hasStarted + [f"{self.pNum}.{self.nameAndPID} process is setting up!"]), flush=True)
+        return True
 
     def run_loop(self) -> bool:
         """run_loop() is called inside run()'s "while True" Loop after checking that the exit event is not set.
             run_loop() returns a True if the default sleep should be used. 
             Override this to do somethign usefull."""
-        print(f'{self.nameAndPID} process running...', flush=True)
-        sleep(0.9)
+        hasStarted = []
+        i = 0
+        for e in self.processesDidStartRun:
+            hasStarted.append(f"{i}={"Y" if e.is_set() else "n"}")
+            i += 1
+        try:
+            d = self.dataQueue.get_nowait()
+        except Empty:
+            d = "empty"
+        print(" ".join(hasStarted + [f"{self.pNum}.{self.nameAndPID} process running... q={d}"]), flush=True)
+        if d == "STOP":
+            self.getEventExitAllProcesses().set()
+            return False
+        sleep(0.4)
         return True
 
     def run_shutdown(self) -> None:
         """run_shutdown() is called when run()'s "while True" loop exits normally (ex: a break statement).
             Override this to do somethign usefull."""
-        print(f'{self.nameAndPID} process is shutting down!', flush=True)
+        print(f'{self.pNum}.{self.nameAndPID} process is shutting down!', flush=True)
 
     def run_shutdownMustRun(self) -> None:
         """run_shutdownMustRun() is called in run()'s try:finally statement so it is always executed.
@@ -189,39 +234,47 @@ class SpawnProcess(mp.Process):
             Override this to do somethign usefull."""
         pass
 
-    def createQueue(self):
-        """"""
-        q = mp.Queue(20)
-        if not hasattr(self, "queueType"):
-            self.queueType = type(q)
-            self.queuesList.append(q)
-        else:
-            self.queuesList = [q]
-        return q
+    def didStartRun(self) -> bool:
+        """didStartRun() returns True if Start was successfully executed."""
+        return self.__startHasRun.is_set()
+    def isSetupDone(self) -> bool:
+        """didStartRun() returns True if Start was successfully executed."""
+        return self.__setupDone.is_set()
+    def wasShutdownMustRunCalled(self) -> bool:
+        """didStartRun() returns True if Start was successfully executed."""
+        return self.__shutdownMustRunCalled.is_set()
 
-    def assignQueue(self, q):
-        """"""
-        if not isinstance(q, self.queueType):
-            raise ValueError("The queue parameter must ultimately be assigned by multiprocessing.Queue() or None if it is to be assigned later. " + 
-                             "It must be assigned before calling .start(). Calling assignQueue(.createQueue()) is the easiest method.")
-        return q
-
-    def createEvent(self):
+    def createEvent(self) -> Event:
         """"""
         return mp.Event()
-    
-    def assignEvent(self, e):
+    def assignEvent(self, e: Event) -> Event:
         """"""
-        if not isinstance(e, self.eventType):
+        if not isinstance(e, Event):
             raise ValueError("The event parameter must ultimately be assigned by multiprocessing.Event() or None if it is to be assigned later. " + 
                              "It must be assigned before calling .start(). Calling assignEvent() is the easiest method.")
         return e
 
+    def createQueue(self, size: int = DEFAULT_QUEUE_SIZE) -> Queue:
+        """"""
+        q = mp.Queue(size)
+        if hasattr(self, "queuesList"):
+            self.queuesList.append(q)
+        else:
+            self.queuesList = [q]
+        return q
+    def assignQueue(self, q: Queue) -> Queue:
+        """"""
+        if not isinstance(q, Queue):
+            raise ValueError("The queue parameter must ultimately be assigned by multiprocessing.Queue() or None if it is to be assigned later. " + 
+                             "It must be assigned before calling .start(). Calling assignQueue(.createQueue()) is the easiest method.")
+        return q
+
     def cleanUpProcess(self) -> None:
         """IF Overriding this Method, THis one NEEDS to be called. Ex 'super().CloseThisProcess()'."""
-        if self.__startHasRun.is_set() and not self.__shutdownMustRunHasRun.is_set():
+        if self.__startHasRun.is_set() and not self.__shutdownMustRunCalled.is_set():
             print(f"{self.name}.run_shutdownMustRun() is running at cleanup ")
             self.run_shutdownMustRun()
+            self.__shutdownMustRunCalled.set()
         if hasattr(self, "queuesList"):
             for q in self.queuesList:
                 q.cancel_join_thread()
@@ -255,6 +308,7 @@ def shutdownAndCloseOneSpawnedProcess(p: SpawnProcess, pName: str = "") -> tuple
     print(f"Main is closing the child processes, {pName}.")
     p.close()
     return pName, exitCode
+# End of function shutdownAndCloseOneSpawnedProcess
 
 def shutdownAndCloseAllSpawnedProcesses(printResults: bool = False) -> list[tuple[str, int | None]]:
     """"""
@@ -269,18 +323,13 @@ def shutdownAndCloseAllSpawnedProcesses(printResults: bool = False) -> list[tupl
         for r in resultsList:
             print(f"{r[0]}.exitcode is {r[1]}")
     return resultsList
+# End of function shutdownAndCloseAllSpawnedProcesses
+
 # -----------------------------------------------------------------------------
-def info(title):
-    print(f"{title} pid: {os.getpid()}; Parent pid: {os.getppid()}; Module name: {__name__}")
 
-def f(name):
-    info('function f')
-    print('hello', name)
-
-class DeltaProcess(SpawnProcess):
-    __exitAllProcesses = "Not correct"
-class EpsilonProcess(SpawnProcess):
-    __processNamesCount = "Not correct"
+class DeltaProcess(SpawnProcess): pass
+class ZetaProcess(SpawnProcess): __processNames = ["Not a Name!!!"]
+class EpsilonProcess(SpawnProcess): pass
 
 # Define the "Main" Function. If this is not the program module this function can be used for isolated debug testing by executing this file.
 def main() -> int:
@@ -290,22 +339,34 @@ def main() -> int:
     mp.set_start_method('spawn', True)
     print(f"The Global Start Method is '{mp.get_start_method(allow_none=True)}' ")
     
-    processes = [SpawnProcess(s) for s in ["Alpha"]*5 + ["Beta"]*4 + ["Gamma"]*3]
-    processes.append(DeltaProcess())
-    processes += [EpsilonProcess(s) for s in [""]*2]
+    processes = [SpawnProcess(s) for s in ["Alpha"]*6 + ["Beta"]*3 + ["Gamma"]*4]
+    processes.append(ZetaProcess())
+    processes += [DeltaProcess(s) for s in [""]*2]
+    processes += [EpsilonProcess(s) for s in [""]*5]
 
     print(f"{SpawnProcess.getEventExitAllProcesses()} = Exit All Processes event from Main.")
     print(f"Main: exitAllProcesses.is_set() returns {SpawnProcess.getEventExitAllProcesses().is_set()}.")
+
+    q = mp.Queue(10)
+    print(f"Main: Calling Pre start setup for all Process(es).")
+    for p in processes:
+        p.preStartSetup(q)
 
     print(f"Main: Starting {len(processes)} Child Process(es).")
     for p in processes:
         p.start()
 
+    print(f"Main: Filling Queue")
+    for i in range(5):
+        q.put(i, True, 5)
+    q.put("stop", True, 5)
+    
     print("Main is going to sleep for 4 seconds.")
     sleep(4)
     
     print("Main: Time to shutdown.")
     shutdownAndCloseAllSpawnedProcesses(True)
+    q.close()
 
     # Return 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)
     return 0 

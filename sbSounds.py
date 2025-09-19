@@ -127,11 +127,16 @@ class sbSounds(SubSystemConfigBase):
         self.setVolume(self.settings.Volume_Percent_Normal)
         print("Finished the initialization of the red and blue sounds.")
 
-
     def setupSubSys(self) -> None:
         """Setup and initialize the sound system."""
+        # Call this here because no SubSystem specific presetup is needed
+        self.preSetupPostSettingsUpdateGetExternalData()
         # Do common setup actions.
         super().setupSubSys()
+        self.setupSounds()
+
+    def setupSounds(self) -> None:
+        """Setup and initialize the sound system."""
         #initialize pygame library
         pygame.init() # pyright: ignore[reportPossiblyUnboundVariable]
 
@@ -166,6 +171,21 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
             self.assignEventsSoundEffects(redEvent,blueEvent)
         else:
             raise AttributeError("Both events have need to be assigned or both need to be not assigned.")
+        if "sbButtonsInterfaceMpSpawning" in globals():
+            print("sbSoundsMpSpawning can see the class sbButtonsInterfaceMpSpawning")
+        if "configFileParser" in globals():
+            print("sbSoundsMpSpawning can see the class configFileParser")
+
+    def setupSubSys(self) -> None:
+        """Setup and initialize the sound system."""
+        # Call this here because no SubSystem specific presetup is needed
+        self.preSetupPostSettingsUpdateGetExternalData()
+        # Do common setup actions.
+        super().setupSubSys()
+        self.setupSounds()
+
+    def isReadyToStart(self) -> bool:
+        """IF Overriding this Method, THis one NEEDS to be called. Ex 'super().isReadyToStart()'."""
 
     def run_setup(self) -> None:
         """"""

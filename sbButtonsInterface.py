@@ -179,6 +179,15 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
         self.queueBlueScore = self.createQueue()
         print(f"Done Executing: sbButtonsInterfaceMpSpawning.__init__()")
 
+    def effectRedCallBack(self, channel) -> None:
+        """"""
+        self.redEffect_PlaySound()
+        self.redEffect_LED_Animations()
+    def effectBlueCallBack(self, channel) -> None:
+        """"""
+        self.blueEffect_PlaySound()
+        self.blueEffect_LED_Animations()
+
     def scoreRedCallBack(self, channel) -> None:
         """"""
         self.queueRedScoreIncriment.put_nowait(1)
