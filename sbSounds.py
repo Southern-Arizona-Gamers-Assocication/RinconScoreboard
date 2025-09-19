@@ -19,7 +19,11 @@ except ModuleNotFoundError:
     print("Module pygame Not Found. Don't use class sbSound.")
 
 from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
-from processSpawning import SpawnProcess
+from processSpawning import SpawnProcess, cast 
+from sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
+
+# Define Constents Here
+SOUNDS_PROCESS_NAME = "Sound_Effects"
 
 # Define Functions and Classes Here
 class SoundSettingsConfig(ConfigSettingsBase):
@@ -43,21 +47,15 @@ class sbSounds(SubSystemConfigBase):
     """
     def __init__(self) -> None:
         """Init Sound subsystem"""
+        super().__init__()
         print(f"Start Executing: sbSounds.__init__() For class: {self.__class__.__qualname__}")
         self._Sounds: dict[str, dict[str, pygame.mixer.Sound]] = {} # pyright: ignore[reportPossiblyUnboundVariable]
         self._totalNumOfSounds = 0
         print(f"Done Executing: sbSounds.__init__()")
+    # End of Method __init__ 
 
     settings = SoundSettingsConfig()
 
-    def loadSoundsFromDirectory(self,  directoryName: str) -> None:
-        """Loads the sounds from the Given directory into _Sounds."""
-        self._Sounds[directoryName] = {}
-        for fileName in os.listdir(directoryName):
-            name = f"{directoryName}/{fileName}"
-            self._Sounds[directoryName][name] = pygame.mixer.Sound(name) # pyright: ignore[reportPossiblyUnboundVariable]
-            self._totalNumOfSounds += 1
-    
     def getSoundsByGroup(self, groupName: str) -> dict:
         """Returns a copy of the sounds in the 'groupName' dictionary."""
         return self._Sounds[groupName].copy()
@@ -113,6 +111,14 @@ class sbSounds(SubSystemConfigBase):
         cmd = subprocess.run(["/usr/bin/amixer", "set", "Master", volume])
         sleep(0.2)
 
+    def loadSoundsFromDirectory(self,  directoryName: str) -> None:
+        """Loads the sounds from the Given directory into _Sounds."""
+        self._Sounds[directoryName] = {}
+        for fileName in os.listdir(directoryName):
+            name = f"{directoryName}/{fileName}"
+            self._Sounds[directoryName][name] = pygame.mixer.Sound(name) # pyright: ignore[reportPossiblyUnboundVariable]
+            self._totalNumOfSounds += 1
+    
     def testSounds(self) ->None:
         """Tests the sounds and optionally print the times"""
         print("Starting the test for all of the sounds")
@@ -127,14 +133,6 @@ class sbSounds(SubSystemConfigBase):
         self.setVolume(self.settings.Volume_Percent_Normal)
         print("Finished the initialization of the red and blue sounds.")
 
-    def setupSubSys(self) -> None:
-        """Setup and initialize the sound system."""
-        # Call this here because no SubSystem specific presetup is needed
-        self.preSetupPostSettingsUpdateGetExternalData()
-        # Do common setup actions.
-        super().setupSubSys()
-        self.setupSounds()
-
     def setupSounds(self) -> None:
         """Setup and initialize the sound system."""
         #initialize pygame library
@@ -147,8 +145,16 @@ class sbSounds(SubSystemConfigBase):
         # Load Blue sounds group directory
         print("Loading the blue sounds.")
         self.loadSoundsFromDirectory(self.settings.Directory_Blue_Sounds)
-
+        # Test Sounds 
         self.testSounds()
+
+    def setupSubSys(self) -> None:
+        """Setup and initialize the sound system."""
+        # Call this here because no SubSystem specific presetup is needed
+        self.preSetupPostSettingsUpdateGetExternalData()
+        # Do common setup actions.
+        super().setupSubSys()
+        self.setupSounds()
 # End of class sbSounds
 
 # sbSoundsMpSpawning() Loads and Plays the sounds for the Scoreboard.
@@ -162,7 +168,7 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
         """"""
         print(f"Executing: sbSoundsMpSpawning.__init__()")
         sbSounds.__init__(self)
-        SpawnProcess.__init__(self, "Sounds")
+        SpawnProcess.__init__(self, SOUNDS_PROCESS_NAME)
         print(f"Done Executing: sbSoundsMpSpawning.__init__()")
         # Setup Blue Effeet event
         if (redEvent is None) and (blueEvent is None):
@@ -176,26 +182,46 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
         if "configFileParser" in globals():
             print("sbSoundsMpSpawning can see the class configFileParser")
 
+    def preStartSetup(self) -> None:
+        """preStartSetup() needs to be run before start is called and after the other SpawnProcess instances are initialized.
+            Override this to do somethign usefull."""
+        self.preSetupPostSettingsUpdateGetExternalData()
+        buttonsProcess = cast(sbButtonsInterfaceMpSpawning, self.getInstancesByProcessName()[BUTTONS_PROCESS_NAME])
+        self.assignEventsSoundEffects(buttonsProcess.eventRedSoundEffect, buttonsProcess.eventBlueSoundEffect)
+        print(f'{self.name} process is done with pre Start setup.')
+
+    def isReadyToStart(self) -> bool:
+        """Checks to see if the red and blue effect events have been assigned.
+            IF Overriding, this Method NEEDS to be called. Ex 'super().isReadyToStart()'."""
+        if not self.isReadyToSetup():
+            print(f"{self.nameAndPID}.isReadyToSetup() returned false. Hint Has the config file been loaded? ")
+            return False
+        if not super().isReadyToStart():
+            return False
+        if not hasattr(self, "eventRedEffect"):
+            print(f"{self.nameAndPID}: Assignment of eventRedEffect has not occurred.")
+            return False
+        if not hasattr(self, "eventBlueEffect"):
+            print(f"{self.nameAndPID}: Assignment of eventBlueEffect has not occurred.")
+            return False
+        return True
+    
     def setupSubSys(self) -> None:
         """Setup and initialize the sound system."""
-        # Call this here because no SubSystem specific presetup is needed
-        self.preSetupPostSettingsUpdateGetExternalData()
         # Do common setup actions.
         super().setupSubSys()
         self.setupSounds()
 
-    def isReadyToStart(self) -> bool:
-        """IF Overriding this Method, THis one NEEDS to be called. Ex 'super().isReadyToStart()'."""
-
-    def run_setup(self) -> None:
-        """"""
+    def run_setup(self) -> bool:
+        """Setup Sounds"""
         print(f'{self.name} process is setting up!', flush=True)
-        if self.eventRedEffect == self.__exitAllProcesses:
-            raise ValueError("Assignment of eventRedEffect has not been assigned. It is still the default value.")
-        if self.eventBlueEffect == self.__exitAllProcesses:
-            raise ValueError("Assignment of eventBlueEffect has not been assigned. It is still the default value.")
+        if not hasattr(self, "eventRedEffect"):
+            raise AttributeError(f"{self.nameAndPID}: Assignment of eventRedEffect has not occurred.")
+        if not hasattr(self, "eventBlueEffect"):
+            raise AttributeError(f"{self.nameAndPID}: Assignment of eventBlueEffect has not occurred.")
         self.setupSubSys()
-
+        return True
+    
     def run_loop(self) -> bool:
         """"""
         if self.eventRedEffect.is_set():
@@ -210,7 +236,7 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
         """"""
         self.eventRedEffect = self.assignEvent(redEvent)
         self.eventBlueEffect = self.assignEvent(blueEvent)
-
+        self.run_setup
 # End of class sbSoundsMpSpawning
 
 

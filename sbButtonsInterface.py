@@ -15,42 +15,39 @@ except ModuleNotFoundError:
     print("Module RPi.GPIO Not Found. Don't use class sbButtonsInterface.")
 
 from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
-from processSpawning import SpawnProcess
+from processSpawning import SpawnProcess, EventType, QueueType, QueueEmptyException, QueueFullException
+
+# Define Constents Here
+BUTTONS_PROCESS_NAME = "Button_Handelers"
 
 # Define Functions and Classes Here
 class ButtonsSettingsConfig(ConfigSettingsBase):
     """ButtonsSettingsConfig: Holds all the button settings. Instantiation Syntax: ButtonsSettingsConfig()"""
     _configSection_Name = "Button Settings"
 
-    Scores_File = ConfigSetting("scores.txt")
     GPIO_PinNum_Effect_Red = ConfigSetting(18)
     GPIO_PinNum_Effect_Blue = ConfigSetting(24)
     GPIO_PinNum_Score_Red = ConfigSetting(19)
     GPIO_PinNum_Score_Blue = ConfigSetting(16)
-    See_GPIO_Warnings = ConfigSettingBool("No")
+    GPIO_See_Warnings = ConfigSettingBool("No")
+    Button_Debounce_Time_ms = ConfigSetting(50)
 # End of class ButtonsSettingsConfig
 
 class sbButtonsInterface(SubSystemConfigBase):
     """Class description:
        Instantiation Syntax: className() See __init__() for syntax details.
     """
-    def __init__(self, redScore: int = 0, blueScore: int = 0) -> None:
+    def __init__(self) -> None:
         """Customize the current instance to a specific initial state."""
-        # Be sure to read current score from file after reading the config file.
-        if isinstance(redScore, int):
-            self.scoreRed = redScore
-        else:
-            raise TypeError("Parameter: redScore needs to be an int().")
-        if isinstance(blueScore, int):
-            self.scoreBlue = blueScore
-        else:
-            raise TypeError("Parameter: blueScore needs to be an int().")
+        super().__init__()
         # These will be assigned to the appropriate functions/methods during setup. Otherwise they do nothing
         self.redEffect_PlaySound = self.dummyMethond
         self.blueEffect_PlaySound = self.dummyMethond
         self.redEffect_LED_Animations = self.dummyMethond
         self.blueEffect_LED_Animations = self.dummyMethond
-        self.updateLEDs = self.dummyMethond
+        self.redScore_Incriment = self.dummyMethond
+        self.blueScore_Incriment = self.dummyMethond
+    # End of Method __init__ 
 
     settings = ButtonsSettingsConfig()
 
@@ -59,12 +56,10 @@ class sbButtonsInterface(SubSystemConfigBase):
         # Do common setup actions.
         super().setupSubSys()
 
-        (self.scoreRed, self.scoreBlue) = self.readScoresFromFile()
-
         # Setup GPIO for buttons
         GPIO.setmode(GPIO.BCM) # pyright: ignore[reportPossiblyUnboundVariable]
         # Ignore warning for now 
-        GPIO.setwarnings(self.settings.See_GPIO_Warnings) # pyright: ignore[reportPossiblyUnboundVariable]
+        GPIO.setwarnings(self.settings.GPIO_See_Warnings) # pyright: ignore[reportPossiblyUnboundVariable]
 
         # Red Effect Button
          # Set GPIO 18 to be an input pin and set initial value to be pulled High (off)
@@ -73,7 +68,7 @@ class sbButtonsInterface(SubSystemConfigBase):
         GPIO.add_event_detect(self.settings.GPIO_PinNum_Effect_Red, # pyright: ignore[reportPossiblyUnboundVariable]
                               GPIO.RISING,                          # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.effectRedCallBack,
-                              bouncetime=50) 
+                              bouncetime=self.settings.Button_Debounce_Time_ms) 
 
         # Blue Effect Button
         # Set GPIO 24 to be an input pin and set initial value to be pulled High (off)
@@ -82,7 +77,7 @@ class sbButtonsInterface(SubSystemConfigBase):
         GPIO.add_event_detect(self.settings.GPIO_PinNum_Effect_Blue, # pyright: ignore[reportPossiblyUnboundVariable]
                               GPIO.RISING,                           # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.effectBlueCallBack,
-                              bouncetime=50) 
+                              bouncetime=self.settings.Button_Debounce_Time_ms) 
 
         # Red Score Button
         # Set GPIO 19 to be an input pin and set initial value to be pulled High (off)
@@ -91,7 +86,7 @@ class sbButtonsInterface(SubSystemConfigBase):
         GPIO.add_event_detect(self.settings.GPIO_PinNum_Score_Red, # pyright: ignore[reportPossiblyUnboundVariable]
                               GPIO.RISING,                         # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.scoreRedCallBack,
-                              bouncetime=50) 
+                              bouncetime=self.settings.Button_Debounce_Time_ms) 
 
         # Blue Score Button
         # Set GPIO 16 to be an input pin and set initial value to be pulled High (off)
@@ -100,14 +95,8 @@ class sbButtonsInterface(SubSystemConfigBase):
         GPIO.add_event_detect(self.settings.GPIO_PinNum_Score_Blue, # pyright: ignore[reportPossiblyUnboundVariable]
                               GPIO.RISING,                          # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.scoreBlueCallBack,
-                              bouncetime=50) 
-    # End of setupSubSys() Method
-
-    def shutdownSubSys(self) -> None:
-        """"""
-        # Clean up
-        GPIO.cleanup() # pyright: ignore[reportPossiblyUnboundVariable]
-        super().shutdownSubSys()
+                              bouncetime=self.settings.Button_Debounce_Time_ms) 
+    # End of setupSubSys Method
 
     def effectRedCallBack(self, channel) -> None:
         """"""
@@ -120,33 +109,20 @@ class sbButtonsInterface(SubSystemConfigBase):
 
     def scoreRedCallBack(self, channel) -> None:
         """"""
-        self.scoreRed += 1
-        print(f" Red score: {self.scoreRed}")
-        self.writeScoresToFile(self.scoreRed, self.scoreBlue)
-        self.updateLEDs()
+        self.redScore_Incriment()
     def scoreBlueCallBack(self, channel) -> None:
         """"""
-        self.scoreBlue += 1
-        print(f"Blue score: {self.scoreBlue}")
-        self.writeScoresToFile(self.scoreRed, self.scoreBlue)
-        self.updateLEDs()
-
-    def readScoresFromFile(self) -> tuple[int, int]:
-        """"""
-        with open(self.settings.Scores_File,'r') as f:
-            linesList = f.readlines(1000)
-            red = int(linesList[0])
-            blue = int(linesList[1])
-            return red, blue
-
-    def writeScoresToFile(self, red: int, blue: int) -> None:
-        """"""
-        with open(self.settings.Scores_File,'w') as f:
-            f.write(f"{red}\n{blue}\n")
+        self.blueScore_Incriment()
 
     def dummyMethond(self) -> None:
         """dummyMethond is just for initializing references to collable objects"""
         pass
+
+    def shutdownSubSys(self) -> None:
+        """"""
+        # Clean up
+        GPIO.cleanup() # pyright: ignore[reportPossiblyUnboundVariable]
+        super().shutdownSubSys()
 # End of class sbButtonsInterface
 
 # sbButtonsInterfaceMpSpawning() Loads and Plays the sounds for the Scoreboard.
@@ -156,11 +132,11 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
     Instantiation Syntax: sbButtonsInterfaceMpSpawning()
     """
 
-    def __init__(self, redScore: int = 0, blueScore: int = 0) -> None:
+    def __init__(self) -> None:
         """"""
         print(f"Executing: sbButtonsInterfaceMpSpawning.__init__()")
-        sbButtonsInterface.__init__(self, redScore, blueScore)
-        SpawnProcess.__init__(self, "Sounds")
+        sbButtonsInterface.__init__(self)
+        SpawnProcess.__init__(self, BUTTONS_PROCESS_NAME)
         # Setup Sound Effeet Events
         self.eventRedSoundEffect = self.createEvent()
         self.redEffect_PlaySound = self.eventRedSoundEffect.set
@@ -173,66 +149,53 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
         self.blueEffect_LED_Animations = self.eventBlueLightEffect.set
         # Setup Score Incriment Queues
         self.queueRedScoreIncriment = self.createQueue()
+        self.redScore_Incriment = self.queueRedScoreIncriment.put
         self.queueBlueScoreIncriment = self.createQueue()
-        # Setup Scores shareing
-        self.queueRedScore = self.createQueue()
-        self.queueBlueScore = self.createQueue()
+        self.blueScore_Incriment = self.queueBlueScoreIncriment.put
         print(f"Done Executing: sbButtonsInterfaceMpSpawning.__init__()")
-
-    def effectRedCallBack(self, channel) -> None:
-        """"""
-        self.redEffect_PlaySound()
-        self.redEffect_LED_Animations()
-    def effectBlueCallBack(self, channel) -> None:
-        """"""
-        self.blueEffect_PlaySound()
-        self.blueEffect_LED_Animations()
+    # End of Method __init__ 
 
     def scoreRedCallBack(self, channel) -> None:
         """"""
-        self.queueRedScoreIncriment.put_nowait(1)
+        try:
+            self.queueRedScoreIncriment.put(1, True, 0.01)
+        except QueueFullException:
+            print(f"{self.nameAndPID} queueRedScoreIncriment has been blocked for 10ms! Somthing is wrong Shutingdown.", flush=True)
+            self.exitAllProcesses.set()
+
     def scoreBlueCallBack(self, channel) -> None:
         """"""
-        self.queueBlueScoreIncriment.put_nowait(1)
+        try:
+            self.queueBlueScoreIncriment.put(1, True, 0.01)
+        except QueueFullException:
+            print(f"{self.nameAndPID} queueBlueScoreIncriment has been blocked for 10ms! Somthing is wrong Shutingdown.", flush=True)
+            self.exitAllProcesses.set()
 
-    def run_setup(self) -> None:
+    def run_setup(self) -> bool:
+        """run_setup() is called when run() is starting before the "while True" Loop.
+            run_setup() returns True to call run_loop() from the "while True" Loop or False to block while waiting for the exit all events to be set. 
+            Override this to do somethign usefull."""
         """"""
-        print(f'{self.name} process is setting up!', flush=True)
+        print(f"(Parent's PID: {os.getppid()}){self.nameAndPID} process is done setting up!", flush=True)
         self.setupSubSys()
-        self.queueRedScore.put(self.scoreRed)
-        self.queueBlueScore.put(self.scoreBlue)
-
-    def run_loop(self) -> bool:
-        """run_loop() is called inside run()'s "while True" Loop after checking that the exit event is not set.
-            run_loop() returns a True if the default sleep should be used. 
-            """
-        if not self.queueRedScoreIncriment.empty() or not self.queueBlueScoreIncriment.empty():
-            print("Updating scores.")
-            # Flushing red queue
-            self.scoreRed += self.flushScoreIncrimentQueue(self.queueRedScoreIncriment, "Red")
-            self.queueRedScore.put(self.scoreRed)
-            # Flushing red queue
-            self.scoreBlue += self.flushScoreIncrimentQueue(self.queueBlueScoreIncriment, "Blue")
-            self.queueBlueScore.put(self.scoreBlue)
-            # Write scores to file.
-            self.writeScoresToFile(self.scoreRed, self.scoreBlue)
-            print(f"Red: {self.scoreRed}; Blue: {self.scoreBlue}")
-            return False
-        else:
-            return True
+        return False # The "while True" Loop will not run.
 
     def run_shutdownMustRun(self) -> None:
         """"""
         self.shutdownSubSys()
 
-    def flushScoreIncrimentQueue(self, q, c: str = "") -> int:
+    def flushScoreIncrimentQueue(self, q: QueueType, c: str = "") -> int:
         x = 0
         for i in range(30):
-            if q.empty():
+            d = 0
+            try:
+                d = q.get(True, 0.001)
+            except QueueEmptyException:
                 break
-            print(f"  Incriment {c} score {i} times.")
-            x += q.get_nowait()
+            finally:
+                x += d
             #sleep(0.001)
+        print(f"  Incriment {c}{"" if c == "" else " "}score {x} times.", flush=True)
         return x
 # End of class sbButtonsInterfaceMpSpawning
 
@@ -258,7 +221,6 @@ def main() -> int:
     message = input("Press enter to quit\n\n") # Run until someone presses enter
     # Clean up
     buttons.shutdownSubSys()
-    print(f"blue: {buttons.scoreBlue}, red: {buttons.scoreRed}\n")
 
     # Return 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)
     return 0 

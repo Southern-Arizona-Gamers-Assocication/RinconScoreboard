@@ -45,7 +45,7 @@ class ConfigSetting:
         #thisIsExecuting()
         #print(f"Initialising a configuration setting to '{defaultValue}'")
         if isinstance(defaultValue, bool):
-            raise TypeError("Use ConfigSettingBool for a boolean type")
+            raise TypeError("Use ConfigSettingBool for a boolean types")
         self.__value__ = defaultValue
         self.valType = type(defaultValue)
 
@@ -253,7 +253,9 @@ class SubSystemConfigBase:
     def isReadyToSetup(self) -> bool:
         """IF Overriding this Method, THis one NEEDS to be called. Ex 'super().isReadyToSetup()'.
             isReadyToSetup() returns True of the subsystem is ready to start, False otherwise."""
-        return self.__preSetupGetExternalData
+        if not self.__preSetupGetExternalData:
+            return False
+        return True
 
     def setupSubSys(self) -> None:
         """IF Overriding this Method, THis one NEEDS to be called on the first line. Ex 'super().setupSubSys()'.
