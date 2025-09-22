@@ -8,9 +8,9 @@ import sys
 from time import sleep   # System-specific parameters and functions
 #import os    # Miscellaneous operating system interfaces
 
-from .configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
-from .processSpawning import SpawnProcess, SharedInteger32, cast as CastType, QueueType, QueueEmptyException
-from .sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
+from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
+from processSpawning import SpawnProcess, SharedInteger32, cast as CastType, QueueType, QueueEmptyException
+from sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
 
 # Define Constents Here
 SCORE_KEEPER_PROCESS_NAME = "Score_Keeper"
