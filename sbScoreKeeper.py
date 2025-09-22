@@ -9,16 +9,17 @@ from time import sleep   # System-specific parameters and functions
 #import os    # Miscellaneous operating system interfaces
 
 from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
-from processSpawning import SpawnProcess, SharedInteger32, cast as CastType, QueueType, QueueEmptyException
+from processSpawning import SpawnProcess, SharedInteger32, cast as CastType, Final, QueueType, QueueEmptyException
 from sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
 
 # Define Constents Here
+SCORE_KEEPER_CONFIG_SECTION_NAME = "ScoreKeeper Settings"
 SCORE_KEEPER_PROCESS_NAME = "Score_Keeper"
 
 # Define Functions and Classes Here
 class ScoreingSettingsConfig(ConfigSettingsBase):
     """ScoreingSettingsConfig: Holds all the button settings. Instantiation Syntax: ScoreingSettingsConfig()"""
-    _configSection_Name = "ScoreKeeper Settings"
+    _configSection_Name: Final[str] = SCORE_KEEPER_CONFIG_SECTION_NAME
 
     Scores_File_Primary = ConfigSetting("scores.txt")
     Scores_File_Backup1 = ConfigSetting("")
@@ -234,7 +235,6 @@ def main() -> int:
 
     # Import Local modules here.
     from sbSounds import sbSoundsMpSpawning
-    from sbScoreKeeper import sbScoreKeeperMpSpawning
     from sbDotStarLEDs import sbDotStarLEDsMpSpawning
     print("Main: Done Importing loc modules.")
 
