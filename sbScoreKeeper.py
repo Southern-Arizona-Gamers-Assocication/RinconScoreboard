@@ -220,8 +220,10 @@ class sbScoreKeeperMpSpawning(sbScoreKeeper, SpawnProcess):
 def main() -> int:
     """This is the "Main" function which is called automatically by the last two lines if this is the top level Module. 'Import this_file' will not call main().
     """
-    from .processSpawning import setStartMethod, allSpawnedProcesses_preStartSetup, allSpawnedProcesses_isReadyToStart, SpawnedProcess_getEventExitAllProcesses
-    from .processSpawning import allSpawnedProcesses_start, allSpawnedProcesses_ShutdownAndClose
+    from processSpawning import allSpawnedProcesses_preStartSetup, allSpawnedProcesses_isReadyToStart, allSpawnedProcesses_start
+    from processSpawning import setStartMethod, SpawnedProcess_getEventExitAllProcesses, allSpawnedProcesses_ShutdownAndClose
+    setStartMethod()
+
     import argparse
     pCmdLine = argparse.ArgumentParser()
     pCmdLine.add_argument("-rs", "--resetScores", action="store_True", help="Reset args to red & blue values specified on command line.")

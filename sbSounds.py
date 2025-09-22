@@ -18,9 +18,9 @@ try:
 except ModuleNotFoundError:
     print("Module pygame Not Found. Don't use class sbSound.")
 
-from .configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
-from .processSpawning import SpawnProcess, cast as CastType
-from .sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
+from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
+from processSpawning import SpawnProcess, cast as CastType
+from sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
 
 # Define Constents Here
 SOUNDS_PROCESS_NAME = "Sound_Effects"

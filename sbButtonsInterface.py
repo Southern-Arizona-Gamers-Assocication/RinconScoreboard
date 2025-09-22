@@ -14,8 +14,8 @@ try:
 except ModuleNotFoundError:
     print("Module RPi.GPIO Not Found. Don't use class sbButtonsInterface.")
 
-from .configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
-from .processSpawning import SpawnProcess, EventType, QueueType, QueueEmptyException, QueueFullException
+from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
+from processSpawning import SpawnProcess, EventType, QueueType, QueueEmptyException, QueueFullException
 
 # Define Constents Here
 BUTTONS_PROCESS_NAME = "Button_Handelers"
