@@ -26,6 +26,7 @@ class ConfigSetting:
         else:
             raise TypeError(f"Argument type(name) = {type(name)}: 'name' needs to be a string of length greather than 0.")
         o: ConfigSettingsBase = owner
+        self.owningClass = o
         errorTextStart = "A config setting name must be unique accross all sections."
         try:
             if len(o._configSection_Name) > 0:
@@ -33,14 +34,12 @@ class ConfigSetting:
             else:
                 self.__sectionName__: str = o._configDefaultSection_Name
             if name in o._configSettingsByName:
-                raise AttributeError(f"{errorTextStart} Setting, {self.__sectionName__}.{name}, is also in {o._configSettingsByName[name].__sectionName__}", name=name, obj=o)
+                raise AttributeError(f"{errorTextStart}\nThis Setting, '{self.__sectionName__}'.{name}, is also in '{o._configSettingsByName[name].__sectionName__}'.", name=name, obj=o)
             o._configSettingsByName[name] = self
             if self.__sectionName__ not in o._configSettingsBySection:
                 o._configSettingsBySection[self.__sectionName__] = {}
             o._configSettingsBySection[self.__sectionName__][name] = self
         except AttributeError as err:
-            for s in err.args:
-                print(s)
             if any([(errorTextStart in s) for s in err.args]):
                 raise
             else:

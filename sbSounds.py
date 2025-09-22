@@ -35,7 +35,6 @@ class SoundSettingsConfig(ConfigSettingsBase):
     Directory_Red_Sounds = ConfigSetting("red_sounds")
     Directory_Blue_Sounds = ConfigSetting("blue_sounds")
     Volume_Percent_Normal = ConfigSetting("50%")
-    Debuging = ConfigSettingBool("No")
     Sounds_FadeIn_ms  = ConfigSetting(200)
     SoundTest_Volume = ConfigSetting("20%")
     SoundTest_Play_Timeout_Enable = ConfigSettingBool("Yes")
