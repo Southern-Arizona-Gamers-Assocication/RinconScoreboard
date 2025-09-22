@@ -18,9 +18,9 @@ try:
 except ModuleNotFoundError:
     print("Module pygame Not Found. Don't use class sbSound.")
 
-from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
-from processSpawning import SpawnProcess, cast 
-from sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
+from .configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
+from .processSpawning import SpawnProcess, cast as CastType
+from .sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
 
 # Define Constents Here
 SOUNDS_PROCESS_NAME = "Sound_Effects"
@@ -99,7 +99,7 @@ class sbSounds(SubSystemConfigBase):
         if  (not pygame.mixer.get_busy()): # pyright: ignore[reportPossiblyUnboundVariable]
             sndName = random.choice(list(self._Sounds[groupName]))
             self._Sounds[groupName][sndName].play()
-            print(f"Playing sound: {sndName}")
+            print(f"Playing sound: {sndName}", flush=True)
     def playRandomRedSong(self):
         """Plays a radom red sound."""
         self.playRandomSongFromGroup(self.settings.Directory_Red_Sounds)
@@ -129,9 +129,9 @@ class sbSounds(SubSystemConfigBase):
             sound.play()
             while(pygame.mixer.get_busy()): # pyright: ignore[reportPossiblyUnboundVariable]
                 sleep(0.1)
-            print(">> Duration: ")
+            print(">> Duration: ", flush=True)
         self.setVolume(self.settings.Volume_Percent_Normal)
-        print("Finished the initialization of the red and blue sounds.")
+        print("Finished the initialization of the red and blue sounds.", flush=True)
 
     def setupSounds(self) -> None:
         """Setup and initialize the sound system."""
@@ -180,31 +180,31 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
         """"""
         self.eventRedEffect = self.assignEvent(redEvent)
         self.eventBlueEffect = self.assignEvent(blueEvent)
-        self.run_setup
 
     def preStartSetup(self) -> None:
         """preStartSetup() needs to be run before start is called and after the other SpawnProcess instances are initialized.
             Override this to do somethign usefull."""
         self.preSetupPostSettingsUpdateGetExternalData()
-        buttonsProcess = cast(sbButtonsInterfaceMpSpawning, self.getInstancesByProcessName()[BUTTONS_PROCESS_NAME])
+        buttonsProcess = CastType(sbButtonsInterfaceMpSpawning, self.getInstancesByProcessName()[BUTTONS_PROCESS_NAME])
         self.assignEventsSoundEffects(buttonsProcess.eventRedSoundEffect, buttonsProcess.eventBlueSoundEffect)
-        print(f'{self.name} process is done with pre Start setup.')
+        print(f"{self.name} process is done with pre Start setup.")
 
     def isReadyToStart(self) -> bool:
         """Checks to see if the red and blue effect events have been assigned.
             IF Overriding, this Method NEEDS to be called. Ex 'super().isReadyToStart()'."""
+        readyToStart = True
         if not self.isReadyToSetup():
-            print(f"{self.nameAndPID}.isReadyToSetup() returned false. Hint Has the config file been loaded? ")
-            return False
+            print(f"{self.name}.isReadyToSetup() returned false. Hint Has the config file been loaded? ")
+            readyToStart = False
         if not super().isReadyToStart():
-            return False
+            readyToStart = False
         if not hasattr(self, "eventRedEffect"):
-            print(f"{self.nameAndPID}: Assignment of eventRedEffect has not occurred.")
-            return False
+            print(f"{self.name} is not ready to start because: Assignment of eventRedEffect has not occurred.")
+            readyToStart = False
         if not hasattr(self, "eventBlueEffect"):
-            print(f"{self.nameAndPID}: Assignment of eventBlueEffect has not occurred.")
-            return False
-        return True
+            print(f"{self.name} is not ready to start because: Assignment of eventBlueEffect has not occurred.")
+            readyToStart = False
+        return readyToStart
     
     def setupSubSys(self) -> None:
         """Setup and initialize the sound system."""
@@ -214,12 +214,13 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
 
     def run_setup(self) -> bool:
         """Setup Sounds"""
-        print(f'{self.name} process is setting up!', flush=True)
+        print(f"{self.nameAndPID} process is setting up!", flush=True)
         if not hasattr(self, "eventRedEffect"):
             raise AttributeError(f"{self.nameAndPID}: Assignment of eventRedEffect has not occurred.")
         if not hasattr(self, "eventBlueEffect"):
             raise AttributeError(f"{self.nameAndPID}: Assignment of eventBlueEffect has not occurred.")
         self.setupSubSys()
+        print(f"{self.nameAndPID} process is Done setting up!", flush=True)
         return True
     
     def run_loop(self) -> bool:

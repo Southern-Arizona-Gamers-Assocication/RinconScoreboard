@@ -204,7 +204,7 @@ class ConfigSettingsBase:
                 print("Config Warning: '{0:s}; {1:s}' is not used./n/t Is it spelled correctly or deprecated?"
                       .format(self.getSectionName(),name))
         self.__allSectionSsettingsUpdated = True
-
+            
     def getSectionSettings(self) -> dict[str, str]:
         """Returns the configuration settings as dictionary of strings. {self:'instanceName'}.sectionAllSettings will invoke this getter."""
         settings = {}

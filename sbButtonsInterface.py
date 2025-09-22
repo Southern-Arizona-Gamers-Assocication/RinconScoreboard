@@ -14,8 +14,8 @@ try:
 except ModuleNotFoundError:
     print("Module RPi.GPIO Not Found. Don't use class sbButtonsInterface.")
 
-from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
-from processSpawning import SpawnProcess, EventType, QueueType, QueueEmptyException, QueueFullException
+from .configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
+from .processSpawning import SpawnProcess, EventType, QueueType, QueueEmptyException, QueueFullException
 
 # Define Constents Here
 BUTTONS_PROCESS_NAME = "Button_Handelers"
@@ -98,19 +98,19 @@ class sbButtonsInterface(SubSystemConfigBase):
                               bouncetime=self.settings.Button_Debounce_Time_ms) 
     # End of setupSubSys Method
 
-    def effectRedCallBack(self, channel) -> None:
+    def effectRedCallBack(self, channel = 0) -> None:
         """"""
         self.redEffect_PlaySound()
         self.redEffect_LED_Animations()
-    def effectBlueCallBack(self, channel) -> None:
+    def effectBlueCallBack(self, channel = 0) -> None:
         """"""
         self.blueEffect_PlaySound()
         self.blueEffect_LED_Animations()
 
-    def scoreRedCallBack(self, channel) -> None:
+    def scoreRedCallBack(self, channel = 0) -> None:
         """"""
         self.redScore_Incriment()
-    def scoreBlueCallBack(self, channel) -> None:
+    def scoreBlueCallBack(self, channel = 0) -> None:
         """"""
         self.blueScore_Incriment()
 
@@ -155,7 +155,7 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
         print(f"Done Executing: sbButtonsInterfaceMpSpawning.__init__()")
     # End of Method __init__ 
 
-    def scoreRedCallBack(self, channel) -> None:
+    def scoreRedCallBack(self, channel = 0) -> None:
         """"""
         try:
             self.queueRedScoreIncriment.put(1, True, 0.01)
@@ -163,7 +163,7 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
             print(f"{self.nameAndPID} queueRedScoreIncriment has been blocked for 10ms! Somthing is wrong Shutingdown.", flush=True)
             self.exitAllProcesses.set()
 
-    def scoreBlueCallBack(self, channel) -> None:
+    def scoreBlueCallBack(self, channel = 0) -> None:
         """"""
         try:
             self.queueBlueScoreIncriment.put(1, True, 0.01)
