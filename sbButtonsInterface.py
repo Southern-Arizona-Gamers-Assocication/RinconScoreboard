@@ -183,20 +183,6 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
     def run_shutdownMustRun(self) -> None:
         """"""
         self.shutdownSubSys()
-
-    def flushScoreIncrimentQueue(self, q: QueueType, c: str = "") -> int:
-        x = 0
-        for i in range(30):
-            d = 0
-            try:
-                d = q.get(True, 0.001)
-            except QueueEmptyException:
-                break
-            finally:
-                x += d
-            #sleep(0.001)
-        print(f"  Incriment {c}{"" if c == "" else " "}score {x} times.", flush=True)
-        return x
 # End of class sbButtonsInterfaceMpSpawning
 
 # -----------------------------------------------------------------------------
