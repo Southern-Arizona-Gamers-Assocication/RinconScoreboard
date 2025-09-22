@@ -74,8 +74,7 @@ class ConfigSetting:
         valueString = settings[self.__nameMe__]
         try:
             if len(valueString) < 1:
-                raise ValueError("Config Error: '{0:s}:{1:s}' has no value in the config file."
-                        .format(self.__sectionName__,self.__nameMe__))
+                raise ValueError(f"Config Error: '{self.__sectionName__}:{self.__nameMe__}' has no value in the config file.")
             self.__value__ = self.convertStr2ValueType(valueString)
         except ValueError as valErr:
             msg = f"Config Error: while updating config setting '{self.__nameMe__}' to '{valueString}'.\n" + \
@@ -204,7 +203,7 @@ class ConfigSettingsBase:
                 print("Config Warning: '{0:s}; {1:s}' is not used./n/t Is it spelled correctly or deprecated?"
                       .format(self.getSectionName(),name))
         self.__allSectionSsettingsUpdated = True
-            
+
     def getSectionSettings(self) -> dict[str, str]:
         """Returns the configuration settings as dictionary of strings. {self:'instanceName'}.sectionAllSettings will invoke this getter."""
         settings = {}
@@ -237,7 +236,7 @@ class ConfigSettingsBase:
 class SubSystemConfigBase:
     """"""
     # Override this in the subclass by the customized settings
-    settings = ConfigSettingsBase()
+    #settings = ConfigSettingsBase()
     
     def __init__(self) -> None:
         """Init Sound subsystem"""
