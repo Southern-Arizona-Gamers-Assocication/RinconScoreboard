@@ -39,7 +39,9 @@ class ConfigSetting:
                 o._configSettingsBySection[self.__sectionName__] = {}
             o._configSettingsBySection[self.__sectionName__][name] = self
         except AttributeError as err:
-            if any([(errorTextStart in s) for s in err.__notes__]):
+            for s in err.args:
+                print(s)
+            if any([(errorTextStart in s) for s in err.args]):
                 raise
             else:
                 raise TypeError("\n".join(["This class expects to be assigned as an attribute inside the class ConfigSettingsBase or its subclasses.", 
