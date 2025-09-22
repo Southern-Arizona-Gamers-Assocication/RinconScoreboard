@@ -204,7 +204,7 @@ class sbScoreKeeperMpSpawning(sbScoreKeeper, SpawnProcess):
             finally:
                 x += d
             #sleep(0.001)
-        print(f"  Incriment {c}{"" if c == "" else " "}score {x} times.", flush=True)
+        print(f"  Incriment {c}{'' if c == "" else ''}score {x} times.", flush=True)
         return x
 
     def assignQueuesScoreIncrementors(self, redQueue, blueQueue) -> None:
