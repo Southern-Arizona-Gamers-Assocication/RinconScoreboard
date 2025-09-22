@@ -19,10 +19,10 @@ try:
 except ModuleNotFoundError:
     print("Module 'adafruit_dotstar' Not Found. Don't use class sbDotStarLEDs.")
 
-from .configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
-from .processSpawning import SpawnProcess, SharedInteger32, cast as CastType, sleep
-from .sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
-from .sbScoreKeeper import SCORE_KEEPER_PROCESS_NAME, sbScoreKeeperMpSpawning
+from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
+from processSpawning import SpawnProcess, SharedInteger32, cast as CastType, sleep
+from sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
+from sbScoreKeeper import SCORE_KEEPER_PROCESS_NAME, sbScoreKeeperMpSpawning
 
 # Define Constents Here
 DOT_STAR_LEDS_PROCESS_NAME = "DotStar_LEDs"

@@ -5,6 +5,7 @@
 # This file loads the sounds and plays them back.
 # 
 
+from logging import shutdown
 import sys   # System-specific parameters and functions
 import os    # Miscellaneous operating system interfaces
 import subprocess
@@ -19,24 +20,26 @@ except ModuleNotFoundError:
     print("Module pygame Not Found. Don't use class sbSound.")
 
 from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
-from processSpawning import SpawnProcess, cast as CastType
+from processSpawning import SpawnProcess, cast as CastType, Final
 from sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
 
 # Define Constents Here
+SOUNDS_CONFIG_SECTION_NAME = "Sound Settings"
 SOUNDS_PROCESS_NAME = "Sound_Effects"
 
 # Define Functions and Classes Here
 class SoundSettingsConfig(ConfigSettingsBase):
     """SoundConfig: Holds all the sound settings. Instantiation Syntax: SoundSettingsConfig()"""
-    _configSection_Name = "Sound Settings"
+    _configSection_Name: Final[str] = SOUNDS_CONFIG_SECTION_NAME
 
     Directory_Red_Sounds = ConfigSetting("red_sounds")
     Directory_Blue_Sounds = ConfigSetting("blue_sounds")
     Volume_Percent_Normal = ConfigSetting("50%")
+    Debuging = ConfigSettingBool("No")
+    Sounds_FadeIn_ms  = ConfigSetting(200)
     SoundTest_Volume = ConfigSetting("20%")
-    SoundTest_Wait_for_Sound_End = ConfigSettingBool("Yes")
-    SoundTest_Print_Sound_Duration  = ConfigSettingBool("Yes")
-    SoundTest_Sound_Duration_Timeout  = ConfigSetting(5.0)
+    SoundTest_Play_Timeout_Enable = ConfigSettingBool("Yes")
+    SoundTest_Sound_Timeout_ms  = ConfigSetting(2000)
 # End of class SoundSettingsConfig
 
 # sbSounds() Loads and Plays the sounds for the Scoreboard.
@@ -50,7 +53,11 @@ class sbSounds(SubSystemConfigBase):
         super().__init__()
         print(f"Start Executing: sbSounds.__init__() For class: {self.__class__.__qualname__}")
         self._Sounds: dict[str, dict[str, pygame.mixer.Sound]] = {} # pyright: ignore[reportPossiblyUnboundVariable]
-        self._totalNumOfSounds = 0
+        self.soundCounts: dict[str, int] = {}
+        self.totalNumOfAllSounds: int = 0
+        self.soundDurations: dict[str, dict[str, float]] = {}
+        self.soundDurationTotals: dict[str, float] = {}
+        self.totalDurationOfAllSounds: float = float(0)
         print(f"Done Executing: sbSounds.__init__()")
     # End of Method __init__ 
 
@@ -94,11 +101,23 @@ class sbSounds(SubSystemConfigBase):
             allSoundNames += list(self._Sounds[sndGroup].keys())
         return allSoundNames
     
+    def playSound(self, sound, maxPlayTime: float = 0):
+        """
+        playSound(): Executes pygame.mixer.Sound.play(loops=0, maxtime=0, fade_ms=0) -> Channel
+        
+        :param sound: The sound object to be played
+        :type sound: pygame.mixer.Sound
+        :param maxPlayTime: The maxtime argument can be used to stop playback after a given number of milliseconds.
+        :type maxPlayTime: float
+        """
+        sound.play(0,maxPlayTime,self.settings.Sounds_FadeIn_ms)
+
     def playRandomSongFromGroup(self,groupName: str):
         """Plays a radom song from a group if no other sound is playing."""
         if  (not pygame.mixer.get_busy()): # pyright: ignore[reportPossiblyUnboundVariable]
             sndName = random.choice(list(self._Sounds[groupName]))
-            self._Sounds[groupName][sndName].play()
+            #self._Sounds[groupName][sndName].play()
+            self.playSound(self._Sounds[groupName][sndName])
             print(f"Playing sound: {sndName}", flush=True)
     def playRandomRedSong(self):
         """Plays a radom red sound."""
@@ -111,13 +130,27 @@ class sbSounds(SubSystemConfigBase):
         cmd = subprocess.run(["/usr/bin/amixer", "set", "Master", volume])
         sleep(0.2)
 
+    def UpdateSoundCounts(self) -> None:
+        """"""
+        for sndGroup in self.soundDurations:
+            self.soundCounts[sndGroup] = len(self.soundDurations[sndGroup])
+            self.soundDurationTotals[sndGroup] = sum(self.soundDurations[sndGroup].values())
+        self.totalNumOfAllSounds = sum(self.soundCounts.values())
+        self.totalDurationOfAllSounds = sum(self.soundDurationTotals.values())
+        
+
     def loadSoundsFromDirectory(self,  directoryName: str) -> None:
         """Loads the sounds from the Given directory into _Sounds."""
+        print(f"Loading the sounds from ./{directoryName}...", end=" ")
         self._Sounds[directoryName] = {}
+        self.soundDurations[directoryName] = {}
         for fileName in os.listdir(directoryName):
             name = f"{directoryName}/{fileName}"
-            self._Sounds[directoryName][name] = pygame.mixer.Sound(name) # pyright: ignore[reportPossiblyUnboundVariable]
-            self._totalNumOfSounds += 1
+            snd = pygame.mixer.Sound(name) # pyright: ignore[reportPossiblyUnboundVariable]
+            self._Sounds[directoryName][name] = snd
+            self.soundDurations[directoryName][name] = snd.get_length() # Return the length of this Sound in seconds.
+        self.UpdateSoundCounts()
+        print(f"Done! Loaded {self.soundCounts[directoryName]} sounds with {self.soundDurations[directoryName]} seconds of play time.")
     
     def testSounds(self) ->None:
         """Tests the sounds and optionally print the times"""
@@ -126,7 +159,10 @@ class sbSounds(SubSystemConfigBase):
         self.setVolume(self.settings.SoundTest_Volume)
         for (name,sound) in self.getAllsounds().items():
             print(f"Playing sound: {name} ", end="")
-            sound.play()
+            if self.settings.SoundTest_Play_Timeout_Enable:
+                self.playSound(sound, self.settings.SoundTest_Sound_Timeout_ms)
+            else:
+                self.playSound(sound)
             while(pygame.mixer.get_busy()): # pyright: ignore[reportPossiblyUnboundVariable]
                 sleep(0.1)
             print(">> Duration: ", flush=True)
@@ -139,14 +175,18 @@ class sbSounds(SubSystemConfigBase):
         pygame.init() # pyright: ignore[reportPossiblyUnboundVariable]
 
         # Load Red sounds group directory
-        print("Loading the red sounds.")
+        print(f"Loading the sounds from ./{self.settings.Directory_Red_Sounds}...", end=" ")
         self.loadSoundsFromDirectory(self.settings.Directory_Red_Sounds)
+        print(f"Done. Loaded {self.soundCounts}")
 
         # Load Blue sounds group directory
-        print("Loading the blue sounds.")
+        print("Loading the sounds blue sounds.")
         self.loadSoundsFromDirectory(self.settings.Directory_Blue_Sounds)
+        print(f"Done loading sounds. Total Sounds: {self.totalNumOfAllSounds} with {self.totalDurationOfAllSounds} seconds of play time.")
+
         # Test Sounds 
         self.testSounds()
+    # End of Method setupSounds 
 
     def setupSubSys(self) -> None:
         """Setup and initialize the sound system."""
@@ -155,6 +195,12 @@ class sbSounds(SubSystemConfigBase):
         # Do common setup actions.
         super().setupSubSys()
         self.setupSounds()
+
+    def shutdownSubSys(self) -> None:
+        """Runs pygame.mixer.quit() which will uninitialize pygame.mixer. All playback will stop and any 
+            loaded Sound objects may not be compatible with the mixer if it is reinitialized later."""
+        print("sBSounds shuting down and uninitialize pygame.mixer.")
+        pygame.mixer.quit() # pyright: ignore[reportPossiblyUnboundVariable]
 # End of class sbSounds
 
 # sbSoundsMpSpawning() Loads and Plays the sounds for the Scoreboard.
@@ -232,8 +278,12 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
             self.playRandomBlueSong()
             self.eventBlueEffect.clear()
         return True
-# End of class sbSoundsMpSpawning
 
+    def run_shutdownMustRun(self) -> None:
+        """run_shutdownMustRun() is called in run()'s try:finally statement so it is always executed.
+            This method should only have important resource freeing expressions."""
+        self.shutdownSubSys()
+# End of class sbSoundsMpSpawning
 
 # -----------------------------------------------------------------------------
 
@@ -241,11 +291,14 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
 def main() -> int:
     print("Hello World!")
 
-    sounds = sbSoundsMpSpawning()
-    #sounds = sbSounds()
-    sounds.setupSubSys()
-    sounds.playRandomRedSong()
-    sounds.playRandomBlueSong()
+    #sounds = sbSoundsMpSpawning()
+    sounds = sbSounds()
+    try:
+        sounds.setupSubSys()
+        sounds.playRandomRedSong()
+        sounds.playRandomBlueSong()
+    finally:
+        sounds.shutdownSubSys()
 
     # Return 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)
     return 0 

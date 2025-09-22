@@ -7,6 +7,7 @@
 
 #import sys   # System-specific parameters and functions
 #import os    # Miscellaneous operating system interfaces  
+from typing import Final, final, cast
 
 import numbers
 
@@ -25,18 +26,24 @@ class ConfigSetting:
         else:
             raise TypeError(f"Argument type(name) = {type(name)}: 'name' needs to be a string of length greather than 0.")
         o: ConfigSettingsBase = owner
+        errorTextStart = "A config setting name must be unique accross all sections."
         try:
             if len(o._configSection_Name) > 0:
                 self.__sectionName__: str = o._configSection_Name
             else:
                 self.__sectionName__: str = o._configDefaultSection_Name
-            #print(f"Registering Setting: '{o.__qualname__}.{name}' in section '{self.__sectionName__}'")
+            if name in o._configSettingsByName:
+                raise AttributeError(f"{errorTextStart} Setting, {self.__sectionName__}.{name}, is also in {o._configSettingsByName[name].__sectionName__}", name=name, obj=o)
+            o._configSettingsByName[name] = self
             if self.__sectionName__ not in o._configSettingsBySection:
                 o._configSettingsBySection[self.__sectionName__] = {}
             o._configSettingsBySection[self.__sectionName__][name] = self
         except AttributeError as err:
-            raise TypeError("\n".join(["This class expects to be assigned as an attribute inside the class ConfigSettingsBase or its subclasses.", 
-                                      f"This instance was assigned in class, {type(o)}, to attribute: '{name}'"])) from err
+            if any([(errorTextStart in s) for s in err.__notes__]):
+                raise
+            else:
+                raise TypeError("\n".join(["This class expects to be assigned as an attribute inside the class ConfigSettingsBase or its subclasses.", 
+                                        f"This instance was assigned in class, {type(o)}, to attribute: '{name}'"])) from err
     def get_name(self) -> str:
         """"""
         return self.__nameMe__
@@ -143,10 +150,10 @@ class ConfigSettingsBase:
     To make a configuration section subclassing this class and override '__configSection_Name__'
     by setting it equal to the desired section name.
     """
-    _configDefaultSection_Name = "Common Settings"
+    _configDefaultSection_Name: Final[str] = "Common Settings"
     _configSection_Name = ""
-    _configSettingsByName__: dict[str, ConfigSetting] = {} 
-    _configSettingsBySection: dict[str, dict[str, ConfigSetting]] = {}
+    _configSettingsByName: Final[dict[str, ConfigSetting]] = {} 
+    _configSettingsBySection: Final[dict[str, dict[str, ConfigSetting]]] = {}
 
     Debuging = ConfigSettingBool("Yes") # declarese if debuging is happening.
     Verbosity_Level = ConfigSetting(2)

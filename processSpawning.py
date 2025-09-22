@@ -276,6 +276,8 @@ class SpawnProcess(mp.Process):
                 q.close()
 # End of class SpawnProcess
 
+# -----------------------------------------------------------------------------
+
 # Define function to be used by the main process to preform common tasks on the instances of SpawnProcess.
 def SpawnedProcess_getEventExitAllProcesses() -> EventType:
     """MUST to be run from the Main processes."""
