@@ -226,7 +226,7 @@ def main() -> int:
 
     import argparse
     pCmdLine = argparse.ArgumentParser()
-    pCmdLine.add_argument("-rs", "--resetScores", action="store_True", help="Reset args to red & blue values specified on command line.")
+    pCmdLine.add_argument("-rs", "--resetScores", action="store_true", help="Reset args to red & blue values specified on command line.")
     pCmdLine.add_argument("-s", "--scores", type=int, nargs=2, help="Set Red & Blue scores. Useage: '-s 3 14' for red=3 & blue=14")
     pCmdLine.add_argument("-r", "--redScore", type=int, help="Set Red score. Useage: '-r 3' for red=3")
     pCmdLine.add_argument("-b", "--blueScore", type=int, help="Set Blue score. Useage: '-r 14' for blue=14")

@@ -198,7 +198,7 @@ class sbSounds(SubSystemConfigBase):
     def shutdownSubSys(self) -> None:
         """Runs pygame.mixer.quit() which will uninitialize pygame.mixer. All playback will stop and any 
             loaded Sound objects may not be compatible with the mixer if it is reinitialized later."""
-        print("sBSounds shuting down and uninitialize pygame.mixer.")
+        print("sBSounds is shuting down and uninitialize pygame.mixer.")
         pygame.mixer.quit() # pyright: ignore[reportPossiblyUnboundVariable]
 # End of class sbSounds
 
