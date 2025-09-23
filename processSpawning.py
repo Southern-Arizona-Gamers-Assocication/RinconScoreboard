@@ -25,6 +25,11 @@ class SharedInteger32:
     MAX_VALUE = 2**(MAX_BITS-1)-1
     MIN_VALUE = -2**(MAX_BITS-1)
     BYTE_ORDER = sys.byteorder
+
+    def __set_name__(self, owner, name) -> None:
+        """"""
+        print(f"SharedInt32.__set_name__() Name: {name}; Owning class: {owner}")
+
     def __init__(self, createSM: bool, *, value: int|None = None, shareName: str|None = None, lock: LockType|None = None) -> None:
         """
         __init__() Initialise the class and creates or attaches to a shared memory locaton for a 32 bit signed integer (-2^31 to 2^31 -1).
