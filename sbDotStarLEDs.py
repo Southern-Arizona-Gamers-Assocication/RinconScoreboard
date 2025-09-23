@@ -184,6 +184,11 @@ class sbDotStarLEDsMpSpawning(sbDotStarLEDs, SpawnProcess):
         """"""
         self.shutdownSubSys()
 
+    def cleanUpProcess(self) -> None:
+        """IF Overriding this Method, THis one NEEDS to be called. Ex 'super().cleanUpProcess()'."""
+        super().cleanUpProcess()
+        self.scoreRedShareing.cleanup()
+        self.scoreBlueShareing.cleanup()
 # End of class sbDotStarLEDsMpSpawning
 
 # -----------------------------------------------------------------------------

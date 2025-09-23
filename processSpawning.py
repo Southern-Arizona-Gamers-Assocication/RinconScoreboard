@@ -26,10 +26,6 @@ class SharedInteger32:
     MIN_VALUE = -2**(MAX_BITS-1)
     BYTE_ORDER = sys.byteorder
 
-    def __set_name__(self, owner, name) -> None:
-        """"""
-        print(f"SharedInt32.__set_name__() Name: {name}; Owning class: {owner}")
-
     def __init__(self, createSM: bool, *, value: int|None = None, shareName: str|None = None, lock: LockType|None = None) -> None:
         """
         __init__() Initialise the class and creates or attaches to a shared memory locaton for a 32 bit signed integer (-2^31 to 2^31 -1).
@@ -48,7 +44,8 @@ class SharedInteger32:
                 raise TypeError("Parameter, 'lock', needs to be the lock of the Shared Memory being linked to.")
         self._lock: Final = mp.Lock() if createSM or lock is None else lock
         self._MemoryToShare: Final = SharedMemory(shareName, createSM, self.MAX_BYTES)
-        print(F"SharedInteger32's shared memory:{self._MemoryToShare.name}")
+        #print(F"SharedInteger32's shared memory:{self._MemoryToShare.name}")
+        self.creatorInstance: Final[bool] = createSM
         if createSM:
             if value is None:
                 value = 0
@@ -82,8 +79,15 @@ class SharedInteger32:
     def getName(self) -> str:
         """"""
         return self._MemoryToShare.name
+
     def getLink(self) -> "SharedInteger32":
         return SharedInteger32(False, shareName=self._MemoryToShare.name, lock=self._lock)
+
+    def cleanup(self) -> None:
+        """"""
+        self._MemoryToShare.close()
+        if self.creatorInstance:
+            self._MemoryToShare.unlink()
 # End of class SharedInteger
 
 class SpawnProcess(mp.Process):
@@ -269,7 +273,7 @@ class SpawnProcess(mp.Process):
         return mp.Lock()
 
     def cleanUpProcess(self) -> None:
-        """IF Overriding this Method, THis one NEEDS to be called. Ex 'super().CloseThisProcess()'."""
+        """IF Overriding this Method, THis one NEEDS to be called. Ex 'super().cleanUpProcess()'."""
         if self.didStartRun() and not self.wasShutdownMustRunCalled():
             print(f"{self.name}.run_shutdownMustRun() is running at cleanup ")
             self.run_shutdownMustRun()

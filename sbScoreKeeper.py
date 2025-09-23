@@ -214,6 +214,12 @@ class sbScoreKeeperMpSpawning(sbScoreKeeper, SpawnProcess):
         self.queueRedScoreIncriment = self.assignQueue(redQueue)
         self.queueBlueScoreIncriment = self.assignQueue(blueQueue)
         self.run_setup
+
+    def cleanUpProcess(self) -> None:
+        """IF Overriding this Method, THis one NEEDS to be called. Ex 'super().cleanUpProcess()'."""
+        super().cleanUpProcess()
+        self.scoreRedShareing.cleanup()
+        self.scoreBlueShareing.cleanup()
 # End of class sbScoreKeeperMpSpawning
 
 # -----------------------------------------------------------------------------
