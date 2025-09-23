@@ -32,6 +32,7 @@ class SoundSettingsConfig(ConfigSettingsBase):
     """SoundConfig: Holds all the sound settings. Instantiation Syntax: SoundSettingsConfig()"""
     _configSection_Name: Final[str] = SOUNDS_CONFIG_SECTION_NAME
 
+    Sound_Effect_Settings = ConfigSetting("Sound Effect Settings")
     Directory_Red_Sounds = ConfigSetting("red_sounds")
     Directory_Blue_Sounds = ConfigSetting("blue_sounds")
     Volume_Percent_Normal = ConfigSetting("50%")

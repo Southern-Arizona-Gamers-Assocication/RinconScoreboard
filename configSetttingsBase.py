@@ -11,6 +11,10 @@ from typing import Final, final, cast
 
 import numbers
 
+# Define Constents Here
+DEFAULT_CONFIG_SECTION_NAME = "Common Settings"
+
+# Define Functions and Classes Here
 class ConfigSetting:
     """"""
     def __set_name__(self, owner, name) -> None:
@@ -33,9 +37,10 @@ class ConfigSetting:
                 self.__sectionName__: str = o._configSection_Name
             else:
                 self.__sectionName__: str = o._configDefaultSection_Name
-            print(f"Setting Name for: '{self.__sectionName__}'.{name}; Owning Class: {type(owner)}Self={type(self)}")
+            print(f"<{self.__qualname__} at {id(self):#x}> Set Name: '{self.__sectionName__}'.{name}; Owning Class: <{type(owner).__qualname__} at {id(self):#x}>")
             if name in o._configSettingsByName:
-                raise AttributeError(f"{errorTextStart}\nThis setting, '{self.__sectionName__}'.{name}, is also in '{o._configSettingsByName[name].__sectionName__}'.", name=name, obj=o)
+                print(f"<{o._configSettingsByName[name].__qualname__} at {id(o._configSettingsByName[name]):#x}> Duplicates Current Setting in section'{o._configSettingsByName[name].__sectionName__}'.")
+                #raise AttributeError(f"{errorTextStart}\nThis setting, '{self.__sectionName__}'.{name}, is also in '{o._configSettingsByName[name].__sectionName__}'.", name=name, obj=o)
             o._configSettingsByName[name] = self
             if self.__sectionName__ not in o._configSettingsBySection:
                 o._configSettingsBySection[self.__sectionName__] = {}
@@ -52,7 +57,7 @@ class ConfigSetting:
     def __init__(self, defaultValue) -> None:
         """"""
         #thisIsExecuting()
-        print(f"Initialising a configuration setting to '{defaultValue}'Self={type(self)}")
+        print(f"<{self.__qualname__} at {id(self):#x}> Initialising to '{defaultValue}'")
         if isinstance(defaultValue, bool):
             raise TypeError("Use ConfigSettingBool for a boolean types")
         self.__value__ = defaultValue
@@ -104,6 +109,7 @@ class ConfigSettingBool(ConfigSetting):
     def __init__(self, defaultValue) -> None:
         """"""
         #print(f"Initialising a Boolean configuration setting to '{defaultValue}'")
+        print(f"<{self.__qualname__} at {id(self):#x}> Initialising to '{defaultValue}'")
         self.valType = bool
         if isinstance(defaultValue, bool):
             self.__value__ = defaultValue
@@ -152,11 +158,12 @@ class ConfigSettingsBase:
     To make a configuration section subclassing this class and override '__configSection_Name__'
     by setting it equal to the desired section name.
     """
-    _configDefaultSection_Name: Final[str] = "Common Settings"
+    _configDefaultSection_Name: Final[str] = DEFAULT_CONFIG_SECTION_NAME
     _configSection_Name = ""
     _configSettingsByName: Final[dict[str, ConfigSetting]] = {} 
     _configSettingsBySection: Final[dict[str, dict[str, ConfigSetting]]] = {}
 
+    Config_Settings_Base = ConfigSetting("Config Settings Base")
     Debuging = ConfigSettingBool("Yes") # declarese if debuging is happening.
     Verbosity_Level = ConfigSetting(2)
 

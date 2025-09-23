@@ -18,13 +18,15 @@ from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSetting
 from processSpawning import SpawnProcess, EventType, QueueType, QueueEmptyException, QueueFullException
 
 # Define Constents Here
+BUTTONS_CONFIG_SECTION_NAME = "Button Settings"
 BUTTONS_PROCESS_NAME = "Button_Handelers"
 
 # Define Functions and Classes Here
 class ButtonsSettingsConfig(ConfigSettingsBase):
     """ButtonsSettingsConfig: Holds all the button settings. Instantiation Syntax: ButtonsSettingsConfig()"""
-    _configSection_Name = "Button Settings"
+    _configSection_Name = BUTTONS_CONFIG_SECTION_NAME
 
+    Button_Interface_Settings = ConfigSetting("Button Interface Settings")
     GPIO_PinNum_Effect_Red = ConfigSetting(18)
     GPIO_PinNum_Effect_Blue = ConfigSetting(24)
     GPIO_PinNum_Score_Red = ConfigSetting(19)
@@ -188,7 +190,7 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
 # -----------------------------------------------------------------------------
 
 # Define the "Main" Function. If this is not the program module this function can be used for isolated debug testing by executing this file.
-def main() -> int:
+def main_old_0() -> int:
     """This is the "Main" function which is called automatically by the last two lines if this is the top level Module. 'Import this_file' will not call main().
     """
     # Import Local modules here.
@@ -207,6 +209,89 @@ def main() -> int:
     message = input("Press enter to quit\n\n") # Run until someone presses enter
     # Clean up
     buttons.shutdownSubSys()
+
+    # Return 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)
+    return 0 
+# End of main_old_0() Function  
+
+def main() -> int:
+    """This is the "Main" function which is called automatically by the last two lines if this is the top level Module. 'Import this_file' will not call main().
+    """
+    from processSpawning import allSpawnedProcesses_preStartSetup, allSpawnedProcesses_isReadyToStart, allSpawnedProcesses_start
+    from processSpawning import setStartMethod, SpawnedProcess_getEventExitAllProcesses, allSpawnedProcesses_ShutdownAndClose
+    setStartMethod()
+
+    import argparse
+    pCmdLine = argparse.ArgumentParser()
+    pCmdLine.add_argument("-rs", "--resetScores", action="store_true", help="Reset args to red & blue values specified on command line.")
+    pCmdLine.add_argument("-s", "--scores", type=int, nargs=2, help="Set Red & Blue scores. Useage: '-s 3 14' for red=3 & blue=14")
+    pCmdLine.add_argument("-r", "--redScore", type=int, help="Set Red score. Useage: '-r 3' for red=3")
+    pCmdLine.add_argument("-b", "--blueScore", type=int, help="Set Blue score. Useage: '-r 14' for blue=14")
+    args = pCmdLine.parse_args()
+
+    # Import Local modules here.
+    from sbScoreKeeper import sbScoreKeeperMpSpawning
+    from sbSounds import sbSoundsMpSpawning
+    from sbDotStarLEDs import sbDotStarLEDsMpSpawning
+    print("Main: Done Importing loc modules.")
+
+    buttons = sbButtonsInterfaceMpSpawning()
+    if args.resetScores:
+        if isinstance(args.scores, list) and len(args.scores) == 2 and args.scores[0] >= 0 and args.scores[1] >= 0:
+            scoreKeep = sbScoreKeeperMpSpawning(True, args.scores[0], args.scores[1])
+        elif isinstance(args.red, int) and isinstance(args.blue, int) and args.red >= 0 and args.blue >= 0:
+            scoreKeep = sbScoreKeeperMpSpawning(True, args.red, args.blue)
+        else:
+           scoreKeep = sbScoreKeeperMpSpawning()
+    else:
+        scoreKeep = sbScoreKeeperMpSpawning()
+    sounds = sbSoundsMpSpawning()
+    dotstar = sbDotStarLEDsMpSpawning()
+    isExitEventSet = SpawnedProcess_getEventExitAllProcesses().is_set
+    print(f"{isExitEventSet()} = Exit All Processes event from Main.")
+    print("Main: Done initializing subsystem classes.")
+
+    print(f"Main: Calling Pre start setup for all Process(es).")
+    allSpawnedProcesses_preStartSetup()
+    notReady = allSpawnedProcesses_isReadyToStart()
+    if len(notReady) > 0:
+        print(f"These modules are not ready to start: {notReady}")
+        allSpawnedProcesses_ShutdownAndClose()
+        return 1
+
+    # Setup Done now start processes
+    allSpawnedProcesses_start()
+
+    # wait on user input or exit All event to be set
+    while True:
+        try:
+            if isExitEventSet():
+                print("Exit event was detected so exiting.")
+                break
+            # Run until someone presses enter or types exit or quit.
+            inp = input("To exit Press enter or type exit or quit. For Scores: sr, sb. For Effects: re, be.\n")
+            match inp.lower():
+                case "":
+                    print("Enter was pressed so exiting.")
+                    break
+                case "exit" | "quit":
+                    print(f"Exiting because '{inp}' was typed.")
+                    break
+                case "sr":
+                    print(f"Triggering Score Red because '{inp}' was typed.")
+                    buttons.scoreRedCallBack()
+                case "sb":
+                    print(f"Triggering Score Blue because '{inp}' was typed.")
+                    buttons.scoreBlueCallBack()
+                case "re":
+                    print(f"Triggering Red Effects because '{inp}' was typed.")
+                    buttons.effectRedCallBack()
+                case "be":
+                    print(f"Triggering Blue Effects because '{inp}' was typed.")
+                    buttons.effectBlueCallBack()
+        finally:
+            # Clean up
+            allSpawnedProcesses_ShutdownAndClose()
 
     # Return 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)
     return 0 

@@ -20,18 +20,20 @@ except ModuleNotFoundError:
     print("Module 'adafruit_dotstar' Not Found. Don't use class sbDotStarLEDs.")
 
 from configSetttingsBase import ConfigSettingsBase, ConfigSetting, ConfigSettingBool, SubSystemConfigBase
-from processSpawning import SpawnProcess, SharedInteger32, cast as CastType, sleep
+from processSpawning import SpawnProcess, SharedInteger32, cast as CastType, Final, sleep
 from sbButtonsInterface import BUTTONS_PROCESS_NAME, sbButtonsInterfaceMpSpawning
 from sbScoreKeeper import SCORE_KEEPER_PROCESS_NAME, sbScoreKeeperMpSpawning
 
 # Define Constents Here
+DOT_STAR_LEDS_CONFIG_SECTION_NAME = "DotStar LEDs Settings"
 DOT_STAR_LEDS_PROCESS_NAME = "DotStar_LEDs"
 
 # Define Functions and Classes Here
 class DotStarSettingsConfig(ConfigSettingsBase):
     """DotStarSettingsConfig: Holds all the button settings. Instantiation Syntax: DotStarSettingsConfig()"""
-    _configSection_Name = "DotStarLED Settings"
+    _configSection_Name: Final[str] = DOT_STAR_LEDS_CONFIG_SECTION_NAME
 
+    DotStar_Effect_Settings = ConfigSetting("DotStar_Effect_Settings")
     TotalNumberOfLEDs = ConfigSetting(288)
     LEDOverallBrightness = ConfigSetting(0.1)
     LogFactor = ConfigSetting(14)
