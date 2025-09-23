@@ -158,14 +158,13 @@ class sbSounds(SubSystemConfigBase):
         # Set Volume
         self.setVolume(self.settings.SoundTest_Volume)
         for (name,sound) in self.getAllsounds().items():
-            print(f"Playing sound: {name} >> Duration:", flush=True)
+            print(f"Playing sound: {name}", flush=True)
             if self.settings.SoundTest_Play_Timeout_Enable:
                 self.playSound(sound, self.settings.SoundTest_Sound_Timeout_ms)
             else:
                 self.playSound(sound)
             while(pygame.mixer.get_busy()): # pyright: ignore[reportPossiblyUnboundVariable]
                 sleep(0.1)
-            print(">> Duration: ", flush=True)
         self.setVolume(self.settings.Volume_Percent_Normal)
         print("Finished the initialization of the red and blue sounds.", flush=True)
 
@@ -252,7 +251,6 @@ class sbSoundsMpSpawning(sbSounds, SpawnProcess):
     def setupSubSys(self) -> None:
         """Setup and initialize the sound system."""
         # Do common setup actions.
-        super().setupSubSys()
         self.setupSounds()
 
     def run_setup(self) -> bool:

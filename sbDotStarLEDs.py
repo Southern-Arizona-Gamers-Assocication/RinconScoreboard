@@ -65,23 +65,23 @@ class sbDotStarLEDs(SubSystemConfigBase):
         self.reset_LEDs()
         #self.dots[0] = (0,0,255)
         #self.dots[287] = (255,0,0)
-        self.updateLEDsToCurrentScore()
+        self.updateLEDsToCurrentScore(True)
 
-    def updateLEDsToCurrentScore(self) -> None:
+    def updateLEDsToCurrentScore(self, initialize: bool = False) -> None:
         """"""
-        self.updateLEDs(self.scoreRed, self.scoreBlue, True)
+        self.updateLEDs(self.scoreRed, self.scoreBlue, initialize)
 
     def updateLEDs(self, red: int, blue: int, initialize: bool = False):
         """"""
         currBlue = int(math.log(blue) * 14)
         currRed = int(math.log(red) * 14)
         if initialize or currBlue > self.threshold_blue:
-            print('Updateing blue LEDSs', flush=True)
+            print('Updateing blue LEDs', flush=True)
             for i in range(currBlue):
                 self.dots[i] = (0,0,255)
             self.threshold_blue = currBlue
         if initialize or currRed > self.threshold_red:
-            print('Updateing blue LEDSs', flush=True)
+            print('Updateing blue LEDs', flush=True)
             for i in range(288-currRed,288):
                 self.dots[i] = (255,0,0)
             self.threshold_red = currRed
@@ -92,7 +92,6 @@ class sbDotStarLEDs(SubSystemConfigBase):
         # Clean up
         self.reset_LEDs()
         super().shutdownSubSys()
-
 
     def reset_LEDs(self) -> None:
         """"""
@@ -174,7 +173,7 @@ class sbDotStarLEDsMpSpawning(sbDotStarLEDs, SpawnProcess):
             self.eventBlueEffect.clear()
         red = self.scoreRedShareing.value
         blue = self.scoreBlueShareing.value
-        if red != self.scoreBlue or blue != self.scoreBlue:
+        if red != self.scoreRed or blue != self.scoreBlue:
             print(f"{self.nameAndPID} Scores changed! Updating LEDs", flush=True)
             self.setScores(red, blue)
             self.updateLEDsToCurrentScore()
