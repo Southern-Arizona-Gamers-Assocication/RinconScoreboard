@@ -37,9 +37,9 @@ class ConfigSetting:
                 self.__sectionName__: str = o._configSection_Name
             else:
                 self.__sectionName__: str = o._configDefaultSection_Name
-            print(f"<{self.__sectionName__}.{name} at {id(self):#x}> Setting Name. Owning Class: <{type(o)} at {id(o):#x}>")
+            #print(f"<{self.__sectionName__}.{name} at {id(self):#x}> Setting Name. Owning Class: <{o} at {id(o):#x}>")
             if name in o._configSettingsByName:
-                print(f"<{o._configSettingsByName[name].__sectionName__}.{o._configSettingsByName[name].__nameMe__} at {id(o._configSettingsByName[name]):#x}> Duplicates Current Setting.")
+                #print(f"<{o._configSettingsByName[name].__sectionName__}.{o._configSettingsByName[name].__nameMe__} at {id(o._configSettingsByName[name]):#x}> Duplicates Current Setting.")
                 #raise AttributeError(f"{errorTextStart}\nThis setting, '{self.__sectionName__}'.{name}, is also in '{o._configSettingsByName[name].__sectionName__}'.", name=name, obj=o)
             o._configSettingsByName[name] = self
             if self.__sectionName__ not in o._configSettingsBySection:
@@ -54,7 +54,7 @@ class ConfigSetting:
     def __init__(self, defaultValue) -> None:
         """"""
         #thisIsExecuting()
-        print(f"<{type(self).__qualname__} at {id(self):#x}> Initialising to '{defaultValue}'")
+        #print(f"<{type(self).__qualname__} at {id(self):#x}> Initialising to '{defaultValue}'")
         if isinstance(defaultValue, bool):
             raise TypeError("Use ConfigSettingBool for a boolean types")
         self.__value__ = defaultValue
@@ -110,7 +110,7 @@ class ConfigSettingBool(ConfigSetting):
     def __init__(self, defaultValue) -> None:
         """"""
         #print(f"Initialising a Boolean configuration setting to '{defaultValue}'")
-        print(f"<{type(self).__qualname__} at {id(self):#x}> Initialising to '{defaultValue}'")
+        #print(f"<{type(self).__qualname__} at {id(self):#x}> Initialising to '{defaultValue}'")
         self.valType = bool
         if isinstance(defaultValue, bool):
             self.__value__ = defaultValue
