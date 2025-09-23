@@ -37,7 +37,7 @@ class ConfigSetting:
                 self.__sectionName__: str = o._configSection_Name
             else:
                 self.__sectionName__: str = o._configDefaultSection_Name
-            print(f"<{self.__sectionName__}.{name} at {id(self):#x}> Setting Name. Owning Class: <{type(o).__qualname__} at {id(o):#x}>")
+            print(f"<{self.__sectionName__}.{name} at {id(self):#x}> Setting Name. Owning Class: <{type(o)} at {id(o):#x}>")
             if name in o._configSettingsByName:
                 print(f"<{o._configSettingsByName[name].__sectionName__}.{o._configSettingsByName[name].__nameMe__} at {id(o._configSettingsByName[name]):#x}> Duplicates Current Setting.")
                 #raise AttributeError(f"{errorTextStart}\nThis setting, '{self.__sectionName__}'.{name}, is also in '{o._configSettingsByName[name].__sectionName__}'.", name=name, obj=o)
@@ -51,9 +51,6 @@ class ConfigSetting:
             else:
                 raise TypeError("\n".join(["This class expects to be assigned as an attribute inside the class ConfigSettingsBase or its subclasses.", 
                                         f"This instance was assigned in class, {type(o)}, to attribute: '{name}'"])) from err
-    def get_name(self) -> str:
-        """"""
-        return self.__nameMe__
     def __init__(self, defaultValue) -> None:
         """"""
         #thisIsExecuting()
@@ -62,6 +59,10 @@ class ConfigSetting:
             raise TypeError("Use ConfigSettingBool for a boolean types")
         self.__value__ = defaultValue
         self.valType = type(defaultValue)
+
+    def get_name(self) -> str:
+        """"""
+        return self.__nameMe__
 
     def __get__(self, instance, owningClass=None):
         """"""
@@ -163,7 +164,7 @@ class ConfigSettingsBase:
     _configSettingsByName: Final[dict[str, ConfigSetting]] = {} 
     _configSettingsBySection: Final[dict[str, dict[str, ConfigSetting]]] = {}
 
-    Config_Settings_Base = ConfigSetting("Config Settings Base")
+    Config_Settings_Base = ConfigSetting("Config_Settings_Base")
     Debuging = ConfigSettingBool("Yes") # declarese if debuging is happening.
     Verbosity_Level = ConfigSetting(2)
 

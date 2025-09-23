@@ -32,7 +32,7 @@ class SoundSettingsConfig(ConfigSettingsBase):
     """SoundConfig: Holds all the sound settings. Instantiation Syntax: SoundSettingsConfig()"""
     _configSection_Name: Final[str] = SOUNDS_CONFIG_SECTION_NAME
 
-    Sound_Effect_Settings = ConfigSetting("Sound Effect Settings")
+    Sound_Effect_Settings = ConfigSetting("Sound_Effect_Settings")
     Directory_Red_Sounds = ConfigSetting("red_sounds")
     Directory_Blue_Sounds = ConfigSetting("blue_sounds")
     Volume_Percent_Normal = ConfigSetting("50%")
@@ -150,7 +150,7 @@ class sbSounds(SubSystemConfigBase):
             self._Sounds[directoryName][name] = snd
             self.soundDurations[directoryName][name] = snd.get_length() # Return the length of this Sound in seconds.
         self.UpdateSoundCounts()
-        print(f"Done! Loaded {self.soundCounts[directoryName]} sounds with {self.soundDurations[directoryName]} seconds of play time.")
+        print(f"Done! Loaded {self.soundCounts[directoryName]} sounds with {self.soundDurationTotals[directoryName]} seconds of play time.")
     
     def testSounds(self) ->None:
         """Tests the sounds and optionally print the times"""
@@ -158,7 +158,7 @@ class sbSounds(SubSystemConfigBase):
         # Set Volume
         self.setVolume(self.settings.SoundTest_Volume)
         for (name,sound) in self.getAllsounds().items():
-            print(f"Playing sound: {name} ", end="")
+            print(f"Playing sound: {name} >> Duration:", flush=True)
             if self.settings.SoundTest_Play_Timeout_Enable:
                 self.playSound(sound, self.settings.SoundTest_Sound_Timeout_ms)
             else:
@@ -175,12 +175,9 @@ class sbSounds(SubSystemConfigBase):
         pygame.init() # pyright: ignore[reportPossiblyUnboundVariable]
 
         # Load Red sounds group directory
-        print(f"Loading the sounds from ./{self.settings.Directory_Red_Sounds}...", end=" ")
         self.loadSoundsFromDirectory(self.settings.Directory_Red_Sounds)
-        print(f"Done. Loaded {self.soundCounts}")
 
         # Load Blue sounds group directory
-        print("Loading the sounds blue sounds.")
         self.loadSoundsFromDirectory(self.settings.Directory_Blue_Sounds)
         print(f"Done loading sounds. Total Sounds: {self.totalNumOfAllSounds} with {self.totalDurationOfAllSounds} seconds of play time.")
 

@@ -112,7 +112,7 @@ class sbDotStarLEDsMpSpawning(sbDotStarLEDs, SpawnProcess):
         """"""
         print(f"Executing: sbDotStarLEDsMpSpawning.__init__()")
         sbDotStarLEDs.__init__(self)
-        SpawnProcess.__init__(self, SCORE_KEEPER_PROCESS_NAME)
+        SpawnProcess.__init__(self, DOT_STAR_LEDS_PROCESS_NAME)
         print(f"Done Executing: sbDotStarLEDsMpSpawning.__init__()")
     # End of Method __init__ 
 

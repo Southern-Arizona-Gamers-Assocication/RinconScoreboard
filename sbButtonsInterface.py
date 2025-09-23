@@ -26,7 +26,7 @@ class ButtonsSettingsConfig(ConfigSettingsBase):
     """ButtonsSettingsConfig: Holds all the button settings. Instantiation Syntax: ButtonsSettingsConfig()"""
     _configSection_Name = BUTTONS_CONFIG_SECTION_NAME
 
-    Button_Interface_Settings = ConfigSetting("Button Interface Settings")
+    Button_Interface_Settings = ConfigSetting("Button_Interface_Settings")
     GPIO_PinNum_Effect_Red = ConfigSetting(18)
     GPIO_PinNum_Effect_Blue = ConfigSetting(24)
     GPIO_PinNum_Score_Red = ConfigSetting(19)
@@ -173,6 +173,11 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
             print(f"{self.nameAndPID} queueBlueScoreIncriment has been blocked for 10ms! Somthing is wrong Shutingdown.", flush=True)
             self.exitAllProcesses.set()
 
+    def preStartSetup(self) -> None:
+        """preStartSetup() needs to be run before start is called and after the other SpawnProcess instances are initialized."""
+        self.preSetupPostSettingsUpdateGetExternalData()
+        print(f"{self.name} process is done with pre Start setup.")
+
     def run_setup(self) -> bool:
         """run_setup() is called when run() is starting before the "while True" Loop.
             run_setup() returns True to call run_loop() from the "while True" Loop or False to block while waiting for the exit all events to be set. 
@@ -229,11 +234,12 @@ def main() -> int:
     pCmdLine.add_argument("-b", "--blueScore", type=int, help="Set Blue score. Useage: '-r 14' for blue=14")
     args = pCmdLine.parse_args()
 
+    print("Main: Start importing subsystem modules.")
     # Import Local modules here.
     from sbScoreKeeper import sbScoreKeeperMpSpawning
     from sbSounds import sbSoundsMpSpawning
     from sbDotStarLEDs import sbDotStarLEDsMpSpawning
-    print("Main: Done Importing loc modules.")
+    print("Main: Done importing subsystem modules.")
 
     buttons = sbButtonsInterfaceMpSpawning()
     if args.resetScores:
@@ -242,7 +248,7 @@ def main() -> int:
         elif isinstance(args.red, int) and isinstance(args.blue, int) and args.red >= 0 and args.blue >= 0:
             scoreKeep = sbScoreKeeperMpSpawning(True, args.red, args.blue)
         else:
-           scoreKeep = sbScoreKeeperMpSpawning()
+            scoreKeep = sbScoreKeeperMpSpawning()
     else:
         scoreKeep = sbScoreKeeperMpSpawning()
     sounds = sbSoundsMpSpawning()
@@ -255,11 +261,12 @@ def main() -> int:
     allSpawnedProcesses_preStartSetup()
     notReady = allSpawnedProcesses_isReadyToStart()
     if len(notReady) > 0:
-        print(f"These modules are not ready to start: {notReady}")
+        print(f"These subsystems are not ready to start: {notReady}")
         allSpawnedProcesses_ShutdownAndClose()
         return 1
 
     # Setup Done now start processes
+    print(f"Main: Setup Done now start processes")
     allSpawnedProcesses_start()
 
     # wait on user input or exit All event to be set

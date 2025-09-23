@@ -21,7 +21,7 @@ class ScoreingSettingsConfig(ConfigSettingsBase):
     """ScoreingSettingsConfig: Holds all the button settings. Instantiation Syntax: ScoreingSettingsConfig()"""
     _configSection_Name: Final[str] = SCORE_KEEPER_CONFIG_SECTION_NAME
 
-    Score_Keeper_Settings = ConfigSetting("Score Keeper Settings")
+    Score_Keeper_Settings = ConfigSetting("Score_Keeper_Settings")
     Scores_File_Primary = ConfigSetting("scores.txt")
     Scores_File_Backup1 = ConfigSetting("")
     Scores_File_Backup2 = ConfigSetting("")

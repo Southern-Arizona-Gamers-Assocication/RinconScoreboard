@@ -139,10 +139,8 @@ class SpawnProcess(mp.Process):
         # Create the Run Progress Events for this instance.
         self.__setupDone: Final[EventType] = self.createEvent()
         self.__shutdownMustRunCalled: Final[EventType] = self.createEvent()
-        print(f"PID: {os.getpid()}; ) {pName}. ")
-        #print(f"{pName} is done Executing: SpawnProcess.__init__()")
-        sharedInt = SharedInteger32(True)
-        a = sharedInt
+        print(f"PID: {os.getpid()};  {pName}. ")
+        print(f"{pName} is done Executing: SpawnProcess.__init__()")
     # End of method __init__
 
     def preStartSetup(self) -> None:
@@ -358,6 +356,8 @@ def allSpawnedProcesses_isReadyToStart() -> list[str]:
         if not p.isReadyToStart():
             notReadyToStartNames.append(name)
             print(f"{name} is not ready to start. The program should exit.")
+    if len(notReadyToStartNames) < 1:
+        print("All subsystems are ready to start.")
     return notReadyToStartNames
 # End of function allSpawnedProcesses_isReadyToStart
 
