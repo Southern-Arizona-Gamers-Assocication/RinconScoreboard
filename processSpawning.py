@@ -37,12 +37,13 @@ class SharedInteger32:
         if createSM:
             shareName = None
         else:
-            if not isinstance(shareName, str) or len(shareName) > 0:
+            if not isinstance(shareName, str) or len(shareName) < 1:
                 raise TypeError("Parameter, 'shareName', needs to be of type str and a name of an existing Shared Memory Int32 when 'createSM' is False.")
             if not isinstance(lock, LockType):
                 raise TypeError("Parameter, 'lock', needs to be the lock of the Shared Memory being linked to.")
         self._lock: Final = mp.Lock() if createSM or lock is None else lock
         self._MemoryToShare: Final = SharedMemory(shareName, createSM, self.MAX_BYTES)
+        print(F"SharedInteger32's shared memory:{self._MemoryToShare.name}")
         if createSM:
             if value is None:
                 value = 0

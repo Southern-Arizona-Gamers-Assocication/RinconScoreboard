@@ -37,7 +37,7 @@ class ConfigSetting:
                 self.__sectionName__: str = o._configSection_Name
             else:
                 self.__sectionName__: str = o._configDefaultSection_Name
-            print(f"<{self.__sectionName__}.{name} at {id(self):#x}> Setting Name. Owning Class: <{type(owner).__qualname__} at {id(self):#x}>")
+            print(f"<{self.__sectionName__}.{name} at {id(self):#x}> Setting Name. Owning Class: <{type(o).__qualname__} at {id(o):#x}>")
             if name in o._configSettingsByName:
                 print(f"<{o._configSettingsByName[name].__sectionName__}.{o._configSettingsByName[name].__nameMe__} at {id(o._configSettingsByName[name]):#x}> Duplicates Current Setting.")
                 #raise AttributeError(f"{errorTextStart}\nThis setting, '{self.__sectionName__}'.{name}, is also in '{o._configSettingsByName[name].__sectionName__}'.", name=name, obj=o)
