@@ -33,7 +33,7 @@ class ConfigSetting:
                 self.__sectionName__: str = o._configSection_Name
             else:
                 self.__sectionName__: str = o._configDefaultSection_Name
-            print(f"Setting Name for: '{self.__sectionName__}'.{name}; Owning Class: {type(owner)}Self={type(self)}"")
+            print(f"Setting Name for: '{self.__sectionName__}'.{name}; Owning Class: {type(owner)}Self={type(self)}")
             if name in o._configSettingsByName:
                 raise AttributeError(f"{errorTextStart}\nThis setting, '{self.__sectionName__}'.{name}, is also in '{o._configSettingsByName[name].__sectionName__}'.", name=name, obj=o)
             o._configSettingsByName[name] = self
