@@ -36,10 +36,10 @@ class SoundSettingsConfig(ConfigSettingsBase):
     Directory_Red_Sounds = ConfigSetting("red_sounds")
     Directory_Blue_Sounds = ConfigSetting("blue_sounds")
     Volume_Percent_Normal = ConfigSetting("50%")
-    Sounds_FadeIn_ms  = ConfigSetting(200)
+    Sounds_FadeIn_ms  = ConfigSetting(100)
     SoundTest_Volume = ConfigSetting("20%")
     SoundTest_Play_Timeout_Enable = ConfigSettingBool("Yes")
-    SoundTest_Sound_Timeout_ms  = ConfigSetting(2000)
+    SoundTest_Sound_Timeout_ms  = ConfigSetting(800)
 # End of class SoundSettingsConfig
 
 # sbSounds() Loads and Plays the sounds for the Scoreboard.

@@ -270,8 +270,8 @@ def main() -> int:
     allSpawnedProcesses_start()
 
     # wait on user input or exit All event to be set
-    while True:
-        try:
+    try:
+        while True:
             if isExitEventSet():
                 print("Exit event was detected so exiting.")
                 break
@@ -296,9 +296,11 @@ def main() -> int:
                 case "be":
                     print(f"Triggering Blue Effects because '{inp}' was typed.")
                     buttons.effectBlueCallBack()
-        finally:
-            # Clean up
-            allSpawnedProcesses_ShutdownAndClose()
+                case _:
+                    print("Unknown Command ")
+    finally:
+        # Clean up
+        allSpawnedProcesses_ShutdownAndClose()
 
     # Return 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)
     return 0 
