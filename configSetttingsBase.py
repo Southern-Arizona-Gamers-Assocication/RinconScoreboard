@@ -52,7 +52,7 @@ class ConfigSetting:
     def __init__(self, defaultValue) -> None:
         """"""
         #thisIsExecuting()
-        print(f"Initialising configuration setting, '{self.__sectionName__}'.{self.__nameMe__}, to '{defaultValue}'Self={type(self)}")
+        print(f"Initialising a configuration setting to '{defaultValue}'Self={type(self)}")
         if isinstance(defaultValue, bool):
             raise TypeError("Use ConfigSettingBool for a boolean types")
         self.__value__ = defaultValue
