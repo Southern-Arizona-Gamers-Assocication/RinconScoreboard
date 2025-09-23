@@ -33,7 +33,7 @@ class ConfigSetting:
                 self.__sectionName__: str = o._configSection_Name
             else:
                 self.__sectionName__: str = o._configDefaultSection_Name
-            print(f"Current setting, '{self.__sectionName__}'.{name}")
+            print(f"Setting Name for: '{self.__sectionName__}'.{name}; Owning Class: {type(owner)}Self={type(self)}"")
             if name in o._configSettingsByName:
                 raise AttributeError(f"{errorTextStart}\nThis setting, '{self.__sectionName__}'.{name}, is also in '{o._configSettingsByName[name].__sectionName__}'.", name=name, obj=o)
             o._configSettingsByName[name] = self
@@ -52,7 +52,7 @@ class ConfigSetting:
     def __init__(self, defaultValue) -> None:
         """"""
         #thisIsExecuting()
-        #print(f"Initialising a configuration setting to '{defaultValue}'")
+        print(f"Initialising configuration setting, '{self.__sectionName__}'.{self.__nameMe__}, to '{defaultValue}'Self={type(self)}"")
         if isinstance(defaultValue, bool):
             raise TypeError("Use ConfigSettingBool for a boolean types")
         self.__value__ = defaultValue
@@ -175,7 +175,7 @@ class ConfigSettingsBase:
             raise ValueError(f"{ConfigSettingsBase.__name__} is expected to be a base class with the Subclasses " +
                               "overriding _configSection_Name to the unique name of the corrisponding section in " +
                               "the configuration file.")
-        #print(f"In ConfigSettingsBase's __init__(); updateFromConfigFile = {updateFromConfigFile}")
+        print(f"In ConfigSettingsBase's __init__(); for {type(self)}")
         if isinstance(updateFromConfigFile, bool) and not updateFromConfigFile:
             self.__allSectionSsettingsUpdated = True 
         else:
