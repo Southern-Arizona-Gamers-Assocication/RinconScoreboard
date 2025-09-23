@@ -245,8 +245,8 @@ def main() -> int:
     if args.resetScores:
         if isinstance(args.scores, list) and len(args.scores) == 2 and args.scores[0] >= 0 and args.scores[1] >= 0:
             scoreKeep = sbScoreKeeperMpSpawning(True, args.scores[0], args.scores[1])
-        elif isinstance(args.red, int) and isinstance(args.blue, int) and args.red >= 0 and args.blue >= 0:
-            scoreKeep = sbScoreKeeperMpSpawning(True, args.red, args.blue)
+        elif isinstance(args.redScore, int) and isinstance(args.blueScore, int) and args.redScore >= 0 and args.blueScore >= 0:
+            scoreKeep = sbScoreKeeperMpSpawning(True, args.redScore, args.blueScore)
         else:
             scoreKeep = sbScoreKeeperMpSpawning()
     else:
