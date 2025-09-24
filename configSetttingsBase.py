@@ -13,6 +13,7 @@ import numbers
 
 # Define Constents Here
 DEFAULT_CONFIG_SECTION_NAME = "Common Settings"
+DO_NOT_READ_CONFIG_FILE = True
 
 # Define Functions and Classes Here
 class ConfigSetting:
@@ -37,10 +38,12 @@ class ConfigSetting:
                 self.__sectionName__: str = o._configSection_Name
             else:
                 self.__sectionName__: str = o._configDefaultSection_Name
-            #print(f"<{self.__sectionName__}.{name} at {id(self):#x}> Setting Name. Owning Class: <{o} at {id(o):#x}>")
-            if name in o._configSettingsByName:
-                #print(f"<{o._configSettingsByName[name].__sectionName__}.{o._configSettingsByName[name].__nameMe__} at {id(o._configSettingsByName[name]):#x}> Duplicates Current Setting.")
-                #raise AttributeError(f"{errorTextStart}\nThis setting, '{self.__sectionName__}'.{name}, is also in '{o._configSettingsByName[name].__sectionName__}'.", name=name, obj=o)
+            if hasattr(o, name):
+                print(f"'{self.__sectionName__}'.{name} already exists and has id:{id(getattr(o,name)):#x} {'==' if id(getattr(o,name)) == id(self) else '!='} Current id:{id(self):#x}.")
+            # print(f"<{self.__sectionName__}.{name} at {id(self):#x}> Setting Name. Owning Class: <{o} at {id(o):#x}>")
+            # if name in o._configSettingsByName:
+            #     print(f"<{o._configSettingsByName[name].__sectionName__}.{o._configSettingsByName[name].__nameMe__} at {id(o._configSettingsByName[name]):#x}> Duplicates Current Setting.")
+            #     #raise AttributeError(f"{errorTextStart}\nThis setting, '{self.__sectionName__}'.{name}, is also in '{o._configSettingsByName[name].__sectionName__}'.", name=name, obj=o)
             o._configSettingsByName[name] = self
             if self.__sectionName__ not in o._configSettingsBySection:
                 o._configSettingsBySection[self.__sectionName__] = {}
@@ -207,36 +210,36 @@ class ConfigSettingsBase:
                 settings[sectName][name] = str(cSetting)
         return settings
 
-    def updateSectionSettings(self, settings: dict[str, str]):
-        """Sets Config Settings from a ConfigParser instance. {self:'instanceName'}.sectionAllSettings(settings) will invoke this getter."""
-        for name, cSetting in self.__configSettings__.items():
-            if name in settings:
-                cSetting.updateFromSettingsDict(settings)
-            else:
-                print("Config Warning: '{0:s};{1:s}' is NOT Found in config file./n/t Using default value."
-                      .format(self.getSectionName(), name))
-        for name in settings.keys():
-            if name not in self.__configSettings__:
-                print("Config Warning: '{0:s}; {1:s}' is not used./n/t Is it spelled correctly or deprecated?"
-                      .format(self.getSectionName(),name))
-        self.__allSectionSsettingsUpdated = True
-
-    def getSectionSettings(self) -> dict[str, str]:
-        """Returns the configuration settings as dictionary of strings. {self:'instanceName'}.sectionAllSettings will invoke this getter."""
-        settings = {}
-        for name, cSetting in self.__configSettings__.items():
-            settings[name] = str(cSetting)
-        return settings
-
     def areSettingsUpdatedFromConfigFile(self) -> bool:
         #return self.__settingsLoadedFromConfigFile__
         return self.__allSectionSsettingsUpdated
 
-    def printSectionSettings(self):
-        """"""
-        print(f"All settings for section: '{self.getSectionName()}'")
-        for name, cSetting in self.__configSettings__.items():
-            print(f"   Name: '{name}' Type: {cSetting.valType} Value: '{cSetting}'")
+    # def updateSectionSettings(self, settings: dict[str, str]):
+    #     """Sets Config Settings from a ConfigParser instance. {self:'instanceName'}.sectionAllSettings(settings) will invoke this getter."""
+    #     for name, cSetting in self.__configSettings__.items():
+    #         if name in settings:
+    #             cSetting.updateFromSettingsDict(settings)
+    #         else:
+    #             print("Config Warning: '{0:s};{1:s}' is NOT Found in config file./n/t Using default value."
+    #                   .format(self.getSectionName(), name))
+    #     for name in settings.keys():
+    #         if name not in self.__configSettings__:
+    #             print("Config Warning: '{0:s}; {1:s}' is not used./n/t Is it spelled correctly or deprecated?"
+    #                   .format(self.getSectionName(),name))
+    #     self.__allSectionSsettingsUpdated = True
+
+    # def getSectionSettings(self) -> dict[str, str]:
+    #     """Returns the configuration settings as dictionary of strings. {self:'instanceName'}.sectionAllSettings will invoke this getter."""
+    #     settings = {}
+    #     for name, cSetting in self.__configSettings__.items():
+    #         settings[name] = str(cSetting)
+    #     return settings
+
+    # def printSectionSettings(self):
+    #     """"""
+    #     print(f"All settings for section: '{self.getSectionName()}'")
+    #     for name, cSetting in self.__configSettings__.items():
+    #         print(f"   Name: '{name}' Type: {cSetting.valType} Value: '{cSetting}'")
 
     def printAllSettings(self, stringOnly: bool = False) -> str:
         """"""
@@ -250,6 +253,13 @@ class ConfigSettingsBase:
         return "\n".join(s)
 # End of class ConfigSettingsBase
 
+class _dummyConfigSettingsBaseClass:
+    """This is a Dummy Class and a placeholder ConfigSettingsBase to be assigned to settings in SubSystemConfigBase. 
+        SubSystemConfigBase.settings should be overridden by a proper subclass of ConfigSettingsBase."""
+    def areSettingsUpdatedFromConfigFile(self) -> bool:
+        """his is a Dummy Function that returns True and does no checking."""
+        return True
+    
 class SubSystemConfigBase:
     """"""
     # Override this in the subclass by the customized settings
@@ -259,9 +269,11 @@ class SubSystemConfigBase:
         """Init Sound subsystem"""
         self.__preSetupGetExternalData: bool = False
 
+    settings = _dummyConfigSettingsBaseClass()
+
     def preSetupPostSettingsUpdateGetExternalData(self):
         """"""
-        if self.settings.areSettingsUpdatedFromConfigFile() or (__name__ != 'scoreboard.py'):
+        if DO_NOT_READ_CONFIG_FILE or self.settings.areSettingsUpdatedFromConfigFile() or (__name__ != 'scoreboard.py'):
             self.__preSetupGetExternalData = True
         else:
             raise RuntimeError("Configuration file has not been read to update settings.")

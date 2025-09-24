@@ -11,6 +11,7 @@ import os    # Miscellaneous operating system interfaces
 import subprocess
 from time import sleep
 import random
+from typing import final
 
 
 try:
@@ -33,6 +34,7 @@ class SoundSettingsConfig(ConfigSettingsBase):
     _configSection_Name: Final[str] = SOUNDS_CONFIG_SECTION_NAME
 
     Sound_Effect_Settings = ConfigSetting("Sound_Effect_Settings")
+    #Sound_Effect_Settings = ConfigSetting("Sound_Effect_Settings2")
     Directory_Red_Sounds = ConfigSetting("red_sounds")
     Directory_Blue_Sounds = ConfigSetting("blue_sounds")
     Volume_Percent_Normal = ConfigSetting("30%")
