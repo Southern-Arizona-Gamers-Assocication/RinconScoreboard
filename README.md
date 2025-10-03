@@ -23,8 +23,8 @@ https://pinout.xyz/ - Raspberry pi pinouts
 || **Light Strips** |||
 |2 or 4| 5v Power   | Red        |       | Optional    |
 | 6    | Ground(Gnd)| Black      |       ||
-| 19   | SPI0 MOSI  | Green      |       | SPI Data to LED Array|
-| 23   | SPI0 SCLK  | Yellow     |       | SPI Clock for LED Array|
+| 19   | SPI0 MOSI (GPIO 10) | Green      |       | SPI Data to LED Array|
+| 23   | SPI0 SCLK (GPIO 11) | Yellow     |       | SPI Clock for LED Array|
 || **2 button box** |            |       ||
 | 35   | GPIO19     | Orange     |  SR+  | Score Red Button: Input Pin w/ Pull-up|
 |      | Gnd        |Orange/White|  SR-  | Score Red Button Return |
