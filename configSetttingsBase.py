@@ -38,8 +38,8 @@ class ConfigSetting:
                 self.__sectionName__: str = o._configSection_Name
             else:
                 self.__sectionName__: str = o._configDefaultSection_Name
-            if hasattr(o, name):
-                print(f"'{self.__sectionName__}'.{name} already exists and has id:{id(getattr(o,name)):#x} {'==' if id(getattr(o,name)) == id(self) else '!='} Current id:{id(self):#x}.")
+            # if hasattr(o, name):
+            #     print(f"'{self.__sectionName__}'.{name} already exists and has id:{id(getattr(o,name)):#x} {'==' if id(getattr(o,name)) == id(self) else '!='} Current id:{id(self):#x}.")
             # print(f"<{self.__sectionName__}.{name} at {id(self):#x}> Setting Name. Owning Class: <{o} at {id(o):#x}>")
             # if name in o._configSettingsByName:
             #     print(f"<{o._configSettingsByName[name].__sectionName__}.{o._configSettingsByName[name].__nameMe__} at {id(o._configSettingsByName[name]):#x}> Duplicates Current Setting.")
