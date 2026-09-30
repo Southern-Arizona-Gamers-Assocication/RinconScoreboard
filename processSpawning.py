@@ -43,13 +43,13 @@ class SharedInteger32:
             if not isinstance(lock, LockType):
                 raise TypeError("Parameter, 'lock', needs to be the lock of the Shared Memory being linked to.")
         self._lock: Final = mp.Lock() if createSM or lock is None else lock
-        self._MemoryToShare: Final = SharedMemory(shareName, createSM, self.MAX_BYTES)
+        self._MemoryToShare: Final[SharedMemory] = SharedMemory(shareName, createSM, self.MAX_BYTES)
         #print(F"SharedInteger32's shared memory:{self._MemoryToShare.name}")
         self.creatorInstance: Final[bool] = createSM
         if createSM:
             if value is None:
                 value = 0
-            self._MemoryToShare.buf[:self.MAX_BYTES] = self.int32ToBytes(value)
+            self._MemoryToShare.buf[:self.MAX_BYTES] = self.int32ToBytes(value) # pyright: ignore[reportOptionalSubscript]
 
     def int32ToBytes(self, value: int) -> bytes:
         """"""
@@ -64,14 +64,14 @@ class SharedInteger32:
     def value(self) -> int:
         """"""
         with self._lock:
-            value = self.int32FromBytes(self._MemoryToShare.buf.tobytes())
+            value = self.int32FromBytes(self._MemoryToShare.buf.tobytes()) # pyright: ignore[reportOptionalMemberAccess]
         return value
 
     @value.setter
     def value(self, val: int) -> None:
         """"""
         with self._lock:
-            self._MemoryToShare.buf[:self.MAX_BYTES] = self.int32ToBytes(val)
+            self._MemoryToShare.buf[:self.MAX_BYTES] = self.int32ToBytes(val) # pyright: ignore[reportOptionalSubscript]
 
     def getLock(self) -> LockType:
         """"""
@@ -116,23 +116,23 @@ class SpawnProcess(mp.Process):
         """"""
         return cls.__processNamesCount
 
-    #__exitAllProcesses: Event = None # pyright: ignore[reportAssignmentType]
+    #__eventExitAll: Event = None # pyright: ignore[reportAssignmentType]
     @classmethod
     @final
-    def getEventExitAllProcesses(cls) -> EventType:
+    def getEventExitAll(cls) -> EventType:
         """The first time this is run, create one Exit event to exit the run()'s "while True" loop. 
             This event needs to be shared by all instances of this class and subclasses so all the 
             processes end and be joined gracefully. """
-        return cls.__exitAllProcesses
+        return cls.__eventExitAll
     
     def __init__(self, pName: str = "", ) -> None:
         """Customize the current instance to a specific initial state."""
         #print(f"Start Executing: SpawnProcess.__init__()")
         # On first call create the exitAllProcesses event. 
         if len(self.__processNames) < 1:
-            SpawnProcess.__exitAllProcesses: Final[EventType] = self.createEvent() # try changing to: SpawnProcess.__exitAllProcesses: Final[Event]
+            SpawnProcess.__eventExitAll: Final[EventType] = self.createEvent() # try changing to: SpawnProcess.__exitAllProcesses: Final[Event]
         # Set the instance.exitAllProcesses to the base class level SpawnProcess.exitAllProcesses event. 
-        self.exitAllProcesses: Final[EventType] = self.assignEvent(self.getEventExitAllProcesses())
+        self.exitAllProcesses: Final[EventType] = self.assignEvent(self.getEventExitAll())
         # settign the processes name and making is unique.
         if not (isinstance(pName, str) and len(pName) > 0):
             pName = self.__class__.__name__
@@ -284,106 +284,123 @@ class SpawnProcess(mp.Process):
                 q.close()
 # End of class SpawnProcess
 
+class ControlSpawnedProcess:
+    """
+    ControlSpawnedProcess is the class that the main process uses to control the Spawned 
+    processes. This class should be Used as a class and not assigned.
+    """
+
+    # Customize the current instance to a specific initial state.
+    def __init__(self) -> None:
+        """
+        __init__ initializes the current instance of ControlSpawnedProcess. 
+        """
+        pass
+    # End of __init__() Method
+
+    _sp = SpawnProcess
+
+    # Define the methods to be used by the main process to preform common tasks on the instances of SpawnProcess.
+    def getEventExitAllProcesses(self) -> EventType:
+        """MUST to be run from the Main processes."""
+        return self._sp.getEventExitAll()
+
+    def getAllInstancesByProcessName(self) -> dict[str, SpawnProcess]:
+        """MUST to be run from the Main processes."""
+        return self._sp.getInstancesByProcessName()
+
+    def getAllProcessNames(self) -> list[str]:
+        """MUST to be run from the Main processes."""
+        return self._sp.getProcessNames()
+
+    def getCountOfProcessNames(self) -> Counter[str]:
+        """MUST to be run from the Main processes."""
+        return self._sp.getProcessNamesCount()
+
+    def shutdownAndCloseOneProcess(self, p: SpawnProcess, pName: str = "") -> tuple[str, int | None]:
+        """MUST to be run from the Main processes."""
+        if not isinstance(pName, str) or pName == "":
+            pName = p.name
+        if pName != p.name:
+            print(f"Using '{pName}' for the process named: '{p.name}'")
+        if p.getEventExitAll().is_set():
+            print(f"{pName}.getEventExitAll.is_set() return true.")
+        else:
+            p.getEventExitAll().set()
+            print(f"Even getEventExitAll has been set for process {pName}.")
+        if p.didStartRun():
+            # Wait for the process to terminate on its own.
+            p.join(5)
+            # if the process is still alive (p.join() timedout) then send a terminate signall.
+            if p.is_alive():
+                print(f"Main: {pName} Seams to still be running. Sending SIGTERM.")
+                p.terminate()
+            p.join(1)
+            p.cleanUpProcess()
+            p.join(3)
+            # if the process is still alive (p.join() timedout) then send a kill signall.
+            if p.is_alive():
+                print(f"Main: {pName} Seams to still be running. Sending SIGKILL.")
+                p.kill()
+            p.join(1)
+        else:
+            p.cleanUpProcess()
+        exitCode = p.exitcode
+        print(f"Main is closing the child processes, {pName}.")
+        p.close()
+        return pName, exitCode
+    # End of method ShutdownAndCloseOneProcess
+
+    def shutdownAndCloseAllProcesses(self, printResults: bool = False) -> list[tuple[str, int | None]]:
+        """MUST to be run from the Main processes."""
+        self.getEventExitAllProcesses().set()
+        print(f"Main: exitAllProcesses.is_set() returns {self.getEventExitAllProcesses().is_set()}.")
+        with ThreadPoolExecutor(max_workers=len(self.getAllProcessNames())) as ex:
+            results = ex.map(self.shutdownAndCloseOneProcess, 
+                            self.getAllInstancesByProcessName().values(),
+                            timeout=60.0)
+        resultsList = [r for r in results]
+        if printResults:
+            for r in resultsList:
+                print(f"{r[0]}.exitcode is {r[1]}")
+        return resultsList
+    # End of method ShutdownAndCloseAllProcesses
+
+    def preStartSetupAllProcesses(self) -> None:
+        """MUST to be run from the Main processes."""
+        for p in self.getAllInstancesByProcessName().values():
+            p.preStartSetup()
+    # End of method preStartSetupAllProcesses
+
+    def areAllProcessesReadyToStart(self) -> list[str]:
+        """MUST to be run from the Main processes."""
+        notReadyToStartNames: list[str] = []
+        for name,p in self.getAllInstancesByProcessName().items():
+            if not p.isReadyToStart():
+                notReadyToStartNames.append(name)
+                print(f"{name} is not ready to start. The program should exit.")
+        if len(notReadyToStartNames) < 1:
+            print("All subsystems are ready to start.")
+        return notReadyToStartNames
+    # End of method areAllProcessesReadyToStart
+
+    def startAllSpawnedProcesses(self) -> None:
+        """MUST to be run from the Main processes."""
+        for p in self.getAllInstancesByProcessName().values():
+            p.start()
+    # End of method startAllSpawnedProcesses
+
+    def setStartMethod(self, startMethod = "spawn") -> None:
+        """MUST to be run from the Main processes."""
+        if startMethod != 'spawn' and startMethod != 'forkserver' and startMethod != 'fork':
+            raise TypeError("Start method MUST be one of the these 3 Values: 'spawn' 'forkserver' 'fork'")
+        print(f"The Global Start Method is '{mp.get_start_method(allow_none=True)}' ")
+        mp.set_start_method('spawn', True)
+        print(f"The Global Start Method is '{mp.get_start_method(allow_none=True)}' ")
+    # End of method setStartMethod
+# End of class ControlSpawnedProcess
+
 # -----------------------------------------------------------------------------
-
-# Define function to be used by the main process to preform common tasks on the instances of SpawnProcess.
-def SpawnedProcess_getEventExitAllProcesses() -> EventType:
-    """MUST to be run from the Main processes."""
-    return SpawnProcess.getEventExitAllProcesses()
-
-def SpawnedProcess_getInstancesByProcessName() -> dict[str, SpawnProcess]:
-    """MUST to be run from the Main processes."""
-    return SpawnProcess.getInstancesByProcessName()
-
-def SpawnedProcess_getProcessNames() -> list[str]:
-    """MUST to be run from the Main processes."""
-    return SpawnProcess.getProcessNames()
-
-def SpawnedProcess_getProcessNamesCount() -> Counter[str]:
-    """MUST to be run from the Main processes."""
-    return SpawnProcess.getProcessNamesCount()
-
-def SpawnedProcess_ShutdownAndClose(p: SpawnProcess, pName: str = "") -> tuple[str, int | None]:
-    """MUST to be run from the Main processes."""
-    if not isinstance(pName, str) or pName == "":
-        pName = p.name
-    if pName != p.name:
-        print(f"Using '{pName}' for the process named: '{p.name}'")
-    if p.getEventExitAllProcesses().is_set():
-        print(f"{pName}.exitAllProcesses.is_set() return true.")
-    else:
-        p.getEventExitAllProcesses().set()
-        print(f"Even exitAllProcesses has been set for process {pName}.")
-    if p.didStartRun():
-        # Wait for the process to terminate on its own.
-        p.join(5)
-        # if the process is still alive (p.join() timedout) then send a terminate signall.
-        if p.is_alive():
-            print(f"Main: {pName} Seams to still be running. Sending SIGTERM.")
-            p.terminate()
-        p.join(1)
-        p.cleanUpProcess()
-        p.join(3)
-        # if the process is still alive (p.join() timedout) then send a kill signall.
-        if p.is_alive():
-            print(f"Main: {pName} Seams to still be running. Sending SIGKILL.")
-            p.kill()
-        p.join(1)
-    else:
-        p.cleanUpProcess()
-    exitCode = p.exitcode
-    print(f"Main is closing the child processes, {pName}.")
-    p.close()
-    return pName, exitCode
-# End of function SpawnedProcess_ShutdownAndClose
-
-def allSpawnedProcesses_ShutdownAndClose(printResults: bool = False) -> list[tuple[str, int | None]]:
-    """MUST to be run from the Main processes."""
-    SpawnProcess.getEventExitAllProcesses().set()
-    print(f"Main: exitAllProcesses.is_set() returns {SpawnProcess.getEventExitAllProcesses().is_set()}.")
-    with ThreadPoolExecutor(max_workers=len(SpawnProcess.getInstancesByProcessName())) as ex:
-        results = ex.map(SpawnedProcess_ShutdownAndClose, 
-                         SpawnProcess.getInstancesByProcessName().values(),
-                         timeout=60.0)
-    resultsList = [r for r in results]
-    if printResults:
-        for r in resultsList:
-            print(f"{r[0]}.exitcode is {r[1]}")
-    return resultsList
-# End of function allSpawnedProcesses_ShutdownAndClose
-
-def allSpawnedProcesses_preStartSetup() -> None:
-    """MUST to be run from the Main processes."""
-    for p in SpawnProcess.getInstancesByProcessName().values():
-        p.preStartSetup()
-# End of function allSpawnedProcesses_preStartSetup
-
-def allSpawnedProcesses_isReadyToStart() -> list[str]:
-    """MUST to be run from the Main processes."""
-    notReadyToStartNames: list[str] = []
-    for name,p in SpawnProcess.getInstancesByProcessName().items():
-        if not p.isReadyToStart():
-            notReadyToStartNames.append(name)
-            print(f"{name} is not ready to start. The program should exit.")
-    if len(notReadyToStartNames) < 1:
-        print("All subsystems are ready to start.")
-    return notReadyToStartNames
-# End of function allSpawnedProcesses_isReadyToStart
-
-def allSpawnedProcesses_start() -> None:
-    """MUST to be run from the Main processes."""
-    for p in SpawnProcess.getInstancesByProcessName().values():
-        p.start()
-# End of function allSpawnedProcesses_start
-
-def setStartMethod(startMethod = "spawn") -> None:
-    """MUST to be run from the Main processes."""
-    if startMethod != 'spawn' and startMethod != 'forkserver' and startMethod != 'fork':
-        raise TypeError("Start method MUST be one of the these 3 Values: 'spawn' 'forkserver' 'fork'")
-    print(f"The Global Start Method is '{mp.get_start_method(allow_none=True)}' ")
-    mp.set_start_method('spawn', True)
-    print(f"The Global Start Method is '{mp.get_start_method(allow_none=True)}' ")
-# End of function setStartMethod
 
 # -----------------------------------------------------------------------------
 
@@ -391,27 +408,26 @@ def setStartMethod(startMethod = "spawn") -> None:
 def main() -> int:
     """This is the "Main" function which is called automatically by the last two lines if this is the top level Module. 'Import this_file' will not call main().
     """
-    setStartMethod()
+    csp = ControlSpawnedProcess()
+    csp.setStartMethod()
 
     processes = [SpawnProcess(s) for s in ["Alpha"]*6 + ["Beta"]*3 + ["Gamma"]*4]
 
-    print(f"{SpawnProcess.getEventExitAllProcesses()} = Exit All Processes event from Main.")
-    print(f"Main: exitAllProcesses.is_set() returns {SpawnProcess.getEventExitAllProcesses().is_set()}.")
+    print(f"{csp.getEventExitAllProcesses()} = Exit All Processes event from Main.")
+    print(f"Main: exitAllProcesses.is_set() returns {csp.getEventExitAllProcesses().is_set()}.")
 
     print(f"Main: Calling Pre start setup for all Process(es).")
-    for p in processes:
-        p.preStartSetup()
+    csp.preStartSetupAllProcesses()
 
     print(f"Main: Starting {len(processes)} Child Process(es).")
-    for p in processes:
-        p.start()
+    csp.startAllSpawnedProcesses()
     #sleep(2)
 
     print("Main is waiting for the Stop Event for a max of 5 seconds.")
-    SpawnProcess.getEventExitAllProcesses().wait(5)
+    csp.getEventExitAllProcesses().wait(5)
     
     print("Main: Time to shutdown.")
-    allSpawnedProcesses_ShutdownAndClose(True)
+    csp.shutdownAndCloseAllProcesses(True)
 
     # Return 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)
     return 0 

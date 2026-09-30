@@ -99,10 +99,6 @@ class sbScoreKeeper(SubSystemConfigBase):
         """"""
         # Do common setup actions.
         super().setupSubSys()
-
-    def dummyMethond(self) -> None:
-        """dummyMethond is just for initializing references to collable objects"""
-        pass
 # End of class sbScoreKeeper
 
 # sbScoreKeeperMpSpawning() Loads and Plays the sounds for the Scoreboard.

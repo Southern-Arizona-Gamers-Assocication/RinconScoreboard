@@ -116,10 +116,6 @@ class sbButtonsInterface(SubSystemConfigBase):
         """"""
         self.blueScore_Incriment()
 
-    def dummyMethond(self) -> None:
-        """dummyMethond is just for initializing references to collable objects"""
-        pass
-
     def shutdownSubSys(self) -> None:
         """"""
         # Clean up

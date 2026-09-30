@@ -1,4 +1,8 @@
 # scoreboard.py
+# 
+# Description: 
+# This is the top level program.  Run this file for full and correct functionality.
+#
 
 import sys
 #import os
@@ -26,9 +30,9 @@ print("Main: Done importing subsystem modules.")
 def main() -> int:
     """This is the "Main" function which is called automatically by the last two lines if this is the top level Module. 'Import this_file' will not call main().
     """
-    from processSpawning import allSpawnedProcesses_preStartSetup, allSpawnedProcesses_isReadyToStart, allSpawnedProcesses_start
-    from processSpawning import setStartMethod, SpawnedProcess_getEventExitAllProcesses, allSpawnedProcesses_ShutdownAndClose
-    setStartMethod()
+    from processSpawning import ControlSpawnedProcess 
+    csp = ControlSpawnedProcess()
+    csp.setStartMethod()
 
     import argparse
     pCmdLine = argparse.ArgumentParser()
@@ -51,21 +55,21 @@ def main() -> int:
         scoreKeep = sbScoreKeeperMpSpawning()
     sounds = sbSoundsMpSpawning()
     dotstar = sbDotStarLEDsMpSpawning()
-    isExitEventSet = SpawnedProcess_getEventExitAllProcesses().is_set
+    isExitEventSet = csp.getEventExitAllProcesses().is_set
     print(f"{isExitEventSet()} = Exit All Processes event from Main.")
     print("Main: Done initializing subsystem classes.")
 
     print(f"Main: Calling Pre start setup for all Process(es).")
-    allSpawnedProcesses_preStartSetup()
-    notReady = allSpawnedProcesses_isReadyToStart()
+    csp.preStartSetupAllProcesses()
+    notReady = csp.areAllProcessesReadyToStart()
     if len(notReady) > 0:
         print(f"These subsystems are not ready to start: {notReady}")
-        allSpawnedProcesses_ShutdownAndClose()
+        csp.shutdownAndCloseAllProcesses()
         return 1
 
     # Setup Done now start processes
     print(f"Main: Setup Done now start processes")
-    allSpawnedProcesses_start()
+    csp.startAllSpawnedProcesses()
 
     # wait on user input or exit All event to be set
     try:
@@ -73,12 +77,14 @@ def main() -> int:
             if isExitEventSet():
                 print("Exit event was detected so exiting.")
                 break
-            # Run until someone presses enter or types exit or quit.
-            inp = input("To exit Press enter or type exit or quit. For Scores: sr, sb. For Effects: re, be.\n")
+            # Run until someone types exit or quit.
+            inp = input("For Scores: sr, sb. For Effects: re, be.\n" +
+                        "Press enter to refresh the displays. \n" +
+                        "To exit type exit or quit. \n")
             match inp.lower():
                 case "":
-                    print("Enter was pressed so exiting.")
-                    break
+                    print("Only Enter was pressed so refreshing the displays.")
+                    pass
                 case "exit" | "quit":
                     print(f"Exiting because '{inp}' was typed.")
                     break
@@ -98,7 +104,7 @@ def main() -> int:
                     print("Unknown Command ")
     finally:
         # Clean up
-        allSpawnedProcesses_ShutdownAndClose()
+        csp.shutdownAndCloseAllProcesses()
 
     # End Main Function and Return 0 
     # 0 is considered a “successful termination”; anyother value is seen as an error by the OS.)

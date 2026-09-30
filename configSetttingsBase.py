@@ -266,9 +266,10 @@ class SubSystemConfigBase:
     #settings = ConfigSettingsBase()
     
     def __init__(self) -> None:
-        """Init Sound subsystem"""
+        """Init ____ subsystem"""
         self.__preSetupGetExternalData: bool = False
 
+    # Override this in the subclass by the customized settings
     settings = _dummyConfigSettingsBaseClass()
 
     def preSetupPostSettingsUpdateGetExternalData(self):
@@ -293,6 +294,10 @@ class SubSystemConfigBase:
 
     def shutdownSubSys(self) -> None:
         """"""
+        pass
+
+    def dummyMethond(self) -> None:
+        """dummyMethond is just for initializing references to callable objects"""
         pass
 # End of class ConfigSettingsBase
 

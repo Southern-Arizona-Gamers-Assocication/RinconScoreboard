@@ -1,4 +1,4 @@
-starting up ssh
+#starting up ssh
 % eval "$(ssh-agent -s)"
 % ssh-add ~/.ssh/id_ed25519
 
@@ -19,7 +19,7 @@ Bus 001 Device 006: ID 0403:6001 Future Technology Devices International, Ltd FT
 https://pinout.xyz/ - Raspberry pi pinouts
 
 |Pin \ #| Pi Func   | Wire Color |Abbrev.| Description |
-|:----:|------------|-----------:|:-----:|------------|
+|:-----:|-----------|-----------:|:-----:|-------------|
 || **Light Strips** |||
 |2 or 4| 5v Power   | Red        |       | Optional    |
 | 6    | Ground(Gnd)| Black      |       ||
@@ -109,4 +109,26 @@ Red Effect and Blue Effect Button Boxes Shared Connector Pinout (Back View and S
 | ┃ |   |   |   |   |   |   |   |   |   |   |   | ┏ | ┓ |   |   |   |   |   |   |   |   |   |   |   | ┃ |
 | ┖ | ━ | ━ | ━ | ━ | ━ | ━ | ━ | ━ | ━ | ━ | ━ | ┛ | ┗ | ━ | ━ | ━ | ━ | ━ | ━ | ━ | ━ | ━ | ━ | ━ | ┚ |
 
+
+
+# Git quick reference:
+# fetch - Download objects and refs from another repository
+% git fetch
+# pull - Fetch from and integrate (merge) with another repository or a local branch
+% git pull
+# push - Update remote refs along with associated objects
+% git push
+# Commit all changed files
+% git commit -a --status
+# Git Help
+% git               # display Quick commandline help
+% git command -h    # display Quick commandline help for this git command
+# Git man page
+% man git
+# Git man page for "command"
+% man git command 
+# Git Tutorial man page
+% man gittutorial
+# Git everyday quick ref man page
+% man giteveryday  
 
