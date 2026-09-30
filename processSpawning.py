@@ -132,7 +132,8 @@ class SpawnProcess(mp.Process):
         if len(self.__processNames) < 1:
             SpawnProcess.__eventExitAll: Final[EventType] = self.createEvent() # try changing to: SpawnProcess.__exitAllProcesses: Final[Event]
         # Set the instance.exitAllProcesses to the base class level SpawnProcess.exitAllProcesses event. 
-        self.exitAllProcesses: Final[EventType] = self.assignEvent(self.getEventExitAll())
+        self._exitAllProcesses: Final[EventType] = self.assignEvent(self.getEventExitAll())
+        #self._exitAllProcesses: Final[EventType] = SpawnProcess.__eventExitAll
         # settign the processes name and making is unique.
         if not (isinstance(pName, str) and len(pName) > 0):
             pName = self.__class__.__name__
@@ -184,16 +185,16 @@ class SpawnProcess(mp.Process):
             self.__setupDone.set()
             if useLoop:
                 while True:
-                    if  self.exitAllProcesses.is_set():
+                    if  self._exitAllProcesses.is_set():
                         print(f"{self.nameAndPID} process noticed that the event exitAllProcesses is set! Now exiting.", flush=True)
                         break
                     if self.run_loop():
                         sleep(0.1)
             else:
-                self.exitAllProcesses.wait()
+                self._exitAllProcesses.wait()
             self.run_shutdown()
         finally:
-            self.exitAllProcesses.set()
+            self._exitAllProcesses.set()
             self.run_shutdownMustRun()
             self.__shutdownMustRunCalled.set()
 

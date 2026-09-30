@@ -6,3 +6,11 @@ SoundTest_Volume = 20%
 SoundTest_Wait_for_Sound_End = Yes
 SoundTest_Print_Sound_Duration = Yes
 SoundTest_Sound_Duration_Timeout = 5.00
+
+[Button Settings]
+GPIO_PinNum_Effect_Red = 18
+GPIO_PinNum_Effect_Blue = 24
+GPIO_PinNum_Score_Red = 19
+GPIO_PinNum_Score_Blue = 16
+GPIO_See_Warnings = No
+Button_Debounce_Time_ms = 25

@@ -10,7 +10,7 @@ import os    # Miscellaneous operating system interfaces
 
 try:
     # Import Raspberry Pi GPIO library
-    import RPi.GPIO as GPIO # pyright: ignore[reportMissingModuleSource]
+    import RPi.GPIO as GPIO
 except ModuleNotFoundError:
     print("Module RPi.GPIO Not Found. Don't use class sbButtonsInterface.")
 
@@ -68,7 +68,7 @@ class sbButtonsInterface(SubSystemConfigBase):
         GPIO.setup(self.settings.GPIO_PinNum_Effect_Red, GPIO.IN, pull_up_down=GPIO.PUD_UP) # pyright: ignore[reportPossiblyUnboundVariable]
         # Setup event on GPIO 18 rising edge
         GPIO.add_event_detect(self.settings.GPIO_PinNum_Effect_Red, # pyright: ignore[reportPossiblyUnboundVariable]
-                              GPIO.RISING,                          # pyright: ignore[reportPossiblyUnboundVariable]
+                              GPIO.BOTH,                          # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.effectRedCallBack,
                               bouncetime=self.settings.Button_Debounce_Time_ms) 
 
@@ -77,7 +77,7 @@ class sbButtonsInterface(SubSystemConfigBase):
         GPIO.setup(self.settings.GPIO_PinNum_Effect_Blue, GPIO.IN, pull_up_down=GPIO.PUD_UP) # pyright: ignore[reportPossiblyUnboundVariable]
         # Setup event on GPIO 24 rising edge
         GPIO.add_event_detect(self.settings.GPIO_PinNum_Effect_Blue, # pyright: ignore[reportPossiblyUnboundVariable]
-                              GPIO.RISING,                           # pyright: ignore[reportPossiblyUnboundVariable]
+                              GPIO.BOTH,                           # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.effectBlueCallBack,
                               bouncetime=self.settings.Button_Debounce_Time_ms) 
 
@@ -86,18 +86,18 @@ class sbButtonsInterface(SubSystemConfigBase):
         GPIO.setup(self.settings.GPIO_PinNum_Score_Red, GPIO.IN, pull_up_down=GPIO.PUD_UP) # pyright: ignore[reportPossiblyUnboundVariable]
         # Setup event on GPIO 19 rising edge
         GPIO.add_event_detect(self.settings.GPIO_PinNum_Score_Red, # pyright: ignore[reportPossiblyUnboundVariable]
-                              GPIO.RISING,                         # pyright: ignore[reportPossiblyUnboundVariable]
+                              GPIO.BOTH,                         # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.scoreRedCallBack,
-                              bouncetime=self.settings.Button_Debounce_Time_ms) 
+                              bouncetime=self.settings.Button_Debounce_Time_ms) # -666 is changed to None in the method
 
         # Blue Score Button
         # Set GPIO 16 to be an input pin and set initial value to be pulled High (off)
         GPIO.setup(self.settings.GPIO_PinNum_Score_Blue, GPIO.IN, pull_up_down=GPIO.PUD_UP) # pyright: ignore[reportPossiblyUnboundVariable]
         # Setup event on GPIO 16 rising edge
         GPIO.add_event_detect(self.settings.GPIO_PinNum_Score_Blue, # pyright: ignore[reportPossiblyUnboundVariable]
-                              GPIO.RISING,                          # pyright: ignore[reportPossiblyUnboundVariable]
+                              GPIO.BOTH,                          # pyright: ignore[reportPossiblyUnboundVariable]
                               callback=self.scoreBlueCallBack,
-                              bouncetime=self.settings.Button_Debounce_Time_ms) 
+                              bouncetime=self.settings.Button_Debounce_Time_ms) # -666 is changed to None in the method
     # End of setupSubSys Method
 
     def effectRedCallBack(self, channel = 0) -> None:
@@ -155,19 +155,22 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
 
     def scoreRedCallBack(self, channel = 0) -> None:
         """"""
-        try:
-            self.queueRedScoreIncriment.put(1, True, 0.01)
-        except QueueFullException:
-            print(f"{self.nameAndPID} queueRedScoreIncriment has been blocked for 10ms! Somthing is wrong Shutingdown.", flush=True)
-            self.exitAllProcesses.set()
+        #print(f"A transition occurred on the Score Blue button. Its new value is {GPIO.input(channel)}.") # pyright: ignore[reportPossiblyUnboundVariable]
+        if not GPIO.input(channel): # pyright: ignore[reportPossiblyUnboundVariable]
+            try:
+                self.redScore_Incriment(1, True, 0.01)
+            except QueueFullException:
+                print(f"{self.nameAndPID} queueRedScoreIncriment has been blocked for 10ms! Somthing is wrong Shutingdown.", flush=True)
+                self._exitAllProcesses.set()
 
     def scoreBlueCallBack(self, channel = 0) -> None:
         """"""
-        try:
-            self.queueBlueScoreIncriment.put(1, True, 0.01)
-        except QueueFullException:
-            print(f"{self.nameAndPID} queueBlueScoreIncriment has been blocked for 10ms! Somthing is wrong Shutingdown.", flush=True)
-            self.exitAllProcesses.set()
+        if not GPIO.input(channel): # pyright: ignore[reportPossiblyUnboundVariable]
+            try:
+                self.queueBlueScoreIncriment.put(1, True, 0.01)
+            except QueueFullException:
+                print(f"{self.nameAndPID} queueBlueScoreIncriment has been blocked for 10ms! Somthing is wrong Shutingdown.", flush=True)
+                self._exitAllProcesses.set()
 
     def preStartSetup(self) -> None:
         """preStartSetup() needs to be run before start is called and after the other SpawnProcess instances are initialized."""

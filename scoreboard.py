@@ -80,12 +80,12 @@ def main() -> int:
             # Run until someone types exit or quit.
             inp = input("For Scores: sr, sb. For Effects: re, be.\n" +
                         "Press enter to refresh the displays. \n" +
-                        "To exit type exit or quit. \n")
+                        "To exit type (e)xit or (q)uit. \n")
             match inp.lower():
                 case "":
                     print("Only Enter was pressed so refreshing the displays.")
                     pass
-                case "exit" | "quit":
+                case "e"|"q" | "exit" | "quit":
                     print(f"Exiting because '{inp}' was typed.")
                     break
                 case "sr":
