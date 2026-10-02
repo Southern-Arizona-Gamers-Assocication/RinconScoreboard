@@ -7,7 +7,7 @@ if byobu has-session -t rincon-scoreboard; then
 fi
 
 # Create a new session
-byobu new-session -d -s rincon-scoreboard
+byobu new-session -d -s RinCon-SB
 
 # Rename first windows
 byobu rename-window Terminal
@@ -27,7 +27,7 @@ byobu select-pane -t 1
 # Resize the pane to be six lines long.
 byobu resize-pane -y 5
 # Watch scores file
-byobu send-keys "watch -n 1 cat scores.txt" Enter
+byobu send-keys "watch -n 1 cat /home/pi/Code/RinconScoreboard/scores.txt" Enter
 
 # Select pane 1 (bottom)
 byobu select-pane -t 0

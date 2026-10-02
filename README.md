@@ -9,6 +9,19 @@
 # to leave venv:
 % deactivate
 
+# Byobu quick reference
+# Attach to the current (or only) sesion
+% byobu attach 
+# List Sessions
+% byobu ls
+# Attach to a specific sesion 
+% byobu attach -t {name or number}
+# Shift-F1  - Help for Function Key bindings 
+# F2        - Create a new window 
+# F6        - Detach from session 
+# F9        - Launch byobu-config window
+# Alt-Left/Right - Move Focus among windows
+
 Requires libUSB-1.0 installed in system
 apt-get install libusb-1.0
 
