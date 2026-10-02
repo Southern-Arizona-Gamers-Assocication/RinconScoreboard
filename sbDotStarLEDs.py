@@ -73,8 +73,15 @@ class sbDotStarLEDs(SubSystemConfigBase):
 
     def updateLEDs(self, red: int, blue: int, initialize: bool = False):
         """"""
-        currBlue = int(math.log(blue) * 14)
-        currRed = int(math.log(red) * 14)
+        if blue > 0:
+            currBlue = int(math.log(blue) * 14)
+        else:
+            currBlue = 0
+        if red > 0:
+            currRed = int(math.log(red) * 14)
+        else:
+            currRed = 0
+            
         if initialize or currBlue > self.threshold_blue:
             print('Updateing blue LEDs', flush=True)
             for i in range(currBlue):

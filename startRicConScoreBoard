@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# Check if the rincon-scoreboard session already exists
+if byobu has-session -t rincon-scoreboard; then
+    echo "A session named rincon-scoreboard already exists. Skipping setup."
+    exit 0
+fi
+
+# Create a new session
+byobu new-session -d -s rincon-scoreboard
+
+# Rename first windows
+byobu rename-window Terminal
+
+###################################
+# Run Rincon Scoreboard           #
+###################################
+byobu new-window -n ScoreBoard
+# Resize the window.
+byobu resize-window -x 120 -y 72
+
+# Split window horizontally
+byobu split-window -v
+
+# Select pane 0 (top)
+byobu select-pane -t 1
+# Resize the pane to be six lines long.
+byobu resize-pane -y 5
+# Watch scores file
+byobu send-keys "watch -n 1 cat scores.txt" Enter
+
+# Select pane 1 (bottom)
+byobu select-pane -t 0
+# Starting Python script
+byobu send-keys "cd /home/pi/Code/RinconScoreboard" Enter
+byobu send-keys "source venv/bin/activate" Enter
+byobu send-keys "python scoreboard.py" Enter
+
+byobu detach

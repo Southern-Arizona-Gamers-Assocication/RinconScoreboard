@@ -102,19 +102,23 @@ class sbButtonsInterface(SubSystemConfigBase):
 
     def effectRedCallBack(self, channel = 0) -> None:
         """"""
-        self.redEffect_PlaySound()
-        self.redEffect_LED_Animations()
+        if not GPIO.input(channel): # pyright: ignore[reportPossiblyUnboundVariable]
+            self.redEffect_PlaySound()
+            self.redEffect_LED_Animations()
     def effectBlueCallBack(self, channel = 0) -> None:
         """"""
-        self.blueEffect_PlaySound()
-        self.blueEffect_LED_Animations()
+        if not GPIO.input(channel): # pyright: ignore[reportPossiblyUnboundVariable]
+            self.blueEffect_PlaySound()
+            self.blueEffect_LED_Animations()
 
     def scoreRedCallBack(self, channel = 0) -> None:
         """"""
-        self.redScore_Incriment()
+        if not GPIO.input(channel): # pyright: ignore[reportPossiblyUnboundVariable]
+            self.redScore_Incriment()
     def scoreBlueCallBack(self, channel = 0) -> None:
         """"""
-        self.blueScore_Incriment()
+        if not GPIO.input(channel): # pyright: ignore[reportPossiblyUnboundVariable]
+            self.blueScore_Incriment()
 
     def shutdownSubSys(self) -> None:
         """"""
@@ -160,7 +164,7 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
             try:
                 self.redScore_Incriment(1, True, 0.01)
             except QueueFullException:
-                print(f"{self.nameAndPID} queueRedScoreIncriment has been blocked for 10ms! Somthing is wrong Shutingdown.", flush=True)
+                print(f"{self.nameAndPID} queueRedScoreIncriment has been blocked for 10ms! Something is wrong Shutting down.", flush=True)
                 self._exitAllProcesses.set()
 
     def scoreBlueCallBack(self, channel = 0) -> None:
@@ -169,7 +173,7 @@ class sbButtonsInterfaceMpSpawning(sbButtonsInterface, SpawnProcess):
             try:
                 self.queueBlueScoreIncriment.put(1, True, 0.01)
             except QueueFullException:
-                print(f"{self.nameAndPID} queueBlueScoreIncriment has been blocked for 10ms! Somthing is wrong Shutingdown.", flush=True)
+                print(f"{self.nameAndPID} queueBlueScoreIncriment has been blocked for 10ms! Something is wrong Shutting down.", flush=True)
                 self._exitAllProcesses.set()
 
     def preStartSetup(self) -> None:
