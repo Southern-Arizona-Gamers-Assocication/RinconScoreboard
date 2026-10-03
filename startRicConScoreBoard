@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Check if the rincon-scoreboard session already exists
-if byobu has-session -t rincon-scoreboard; then
+if byobu has-session -t RinCon-SB; then
     echo "A session named rincon-scoreboard already exists. Skipping setup."
     exit 0
 fi
